@@ -3,13 +3,18 @@
 # This file is part of the quickbuild software package
 # https://github.com/lanceman2/quickbuild
 
+# A software build system based on GNU make.
+# A software build system for web apps with served public static files and
+# installed executables.
+# Has build rules based on file suffixes.
+
 
 ifndef top_srcdir
     $(error top_srcdir was not defined)
 endif
 
 
--include $(topsrc_dir)/qb_package.make
+-include $(top_srcdir)/package.make
 
 ###################################################################
 #  Common variables that are set with the package
@@ -26,7 +31,8 @@ TAR_NAME ?= $(PACKAGE_NAME)-$(VERSION)
 
 ###################################################################
 
--include $(topsrc_dir)/qb_config.make
+
+-include $(top_srcdir)/config.make
 
 ###################################################################
 #  Common variables that are set and saved by the configure step
@@ -38,7 +44,7 @@ PREFIX ?= $(HOME)/installed/$(TAR_NAME)
 #   yui-compressor --line-break 60 --type css
 # or for debug
 #   cat
-JS_COMPRESS ?= cat
+CSS_COMPRESS ?= cat
 
 # How to convert .jsp to .js
 #   yui-compressor --line-break 60 --type js
@@ -68,12 +74,38 @@ CXXFLAGS ?= -g -Wall
 # Define our suffix list
 .SUFFIXES: .js .css .html .js .css .jsp .cs .dl .bl .c .cpp .h .hpp .d .o .lo .so
 
-# .jsp is javaScript before compressing to .js
-# .cs is CSS before compress to .css
-# *.in makes * from sed replace command
-# *.dl is a script that downloads *
-# *.bl is a script that makes *
-# .js, .css, .html are all installed and served
+##############################################################
+# List of suffixes
+##############################################################
+#
+#  .jsp is javaScript before compressing to .js
+#  .cs is CSS before compress to .css
+#  .htm HTML fragment
+#  .html HTML file to install
+#  *.in makes * from sed replace command
+#  *.dl is a script that downloads *
+#  *.bl is a script that makes *
+#  .js, .css, .html are all installed and served
+#  .d C/C++ depend file
+#  .o object file to build compiled C/C++ program
+#  .lo shared object file to compile shared library
+#  .so dynamic shared object library
+#  .cpp C++ source
+#  .c C source
+#  compiled programs and scripts have no particular suffix
+#
+# -----------------------------------------------------------
+#   Installed file types if INSTALL_DIR is defined
+# -----------------------------------------------------------
+#
+#   Files are installed from a given source directory
+#   to one installation directory given by user setting
+#   INSTALL_DIR.
+#
+#  .js .css .so .html compiled-programs are installed if
+#  INSTALL_DIR is defined
+#
+##############################################################
 
 
 .DEFAULT_GOAL := build
@@ -134,35 +166,214 @@ downloaded := $(sort\
  $(DOWNLOADED)\
 )
 
-# We tally up all the files that are built
-# including all possible intermediate files:
-built := $(sort\
+
+# C or C++ compiled programs
+bins := $(filter-out %.so, $(patsubst %_SOURCES,%,$(filter %_SOURCES, $(.VARIABLES))))
+
+# C or C++ shared libraries
+libs := $(filter-out %_SOURCES, $(patsubst %.so_SOURCES,%.so,$(filter %_SOURCES, $(.VARIABLES))))
+
+dependfiles :=
+id :=
+objects :=
+c_compile := $(CC)
+cpp_compile := $(CXX)
+
+# GNU make function to make dependency (*.d) files and object (*.o, *.lo) files.
+define Mkdepend
+ # $(1) = program_name or libfoo.so
+ # $(2) = C/C++ source filename without .c or .cpp suffix
+ # $(3) = c or cpp
+ # $(4) = object type o or lo
+ # name needs to be unique
+ id := $(words $(counter))
+ name := $$(patsubst %.so,%_so,qb_build/$$(notdir $(2)-$$(id)-$(1)))
+ counter := $$(counter) x
+ $$(name).d $$(name).o: $(2).$(3) # rule below
+ $$(name).d_target := $$(name).$(4)
+ $$(name).$(4)_compile := $$($(3)_compile)
+ $$(name).d_compile := $$($(3)_compile)
+ $$(name).d $$(name).$(4): $(2).$(3)
+ dependfiles := $(dependfiles) $$(name).d
+ $(1)_objects := $$($(1)_objects) $$(name).$(4)
+ common_cflags := $(CPPFLAGS) $$($$(name).$(4)_CPPFLAGS) $$($(1)_CPPFLAGS)
+ ifeq ($(3),c)
+   $$(name).$(4)_cflags := $$(strip $(CFLAGS) $$(common_cflags) $$($(1)_CFLAGS) $$($$(name).$(4)_CFLAGS))
+ else
+   $$(name).$(4)_cflags := $$(strip $(CXXFLAGS) $$(common_cflags) $$($(1)_CXXFLAGS) $$($$(name).$(4)_CXXFLAGS))
+ endif
+ $$(name).d_cflags := $$($$(name).$(4)_cflags)
+endef
+
+
+# GNU make function to make C/C++ program dependencies.
+define Mkcpprules
+  # $(1) = program_name
+  # $(2) = object suffix o or lo
+  # $(3) = nothing or -shared
+  counter := x
+  # list os object files for this program
+  objects :=
+  cpp_srcfiles :=  $$(patsubst %.cpp,%,$$(filter %.cpp,$$($(1)_SOURCES)))
+  ifneq ($$(strip $$(cpp_srcfiles)),)
+    $(1)_compile := $(CXX)
+    $(1)_cflags := $$(strip $(3) $(CXXFLAGS) $$($(1)_CXXFLAGS))
+  else
+    $(1)_compile := $(CC)
+    $(1)_cflags := $$(strip $(3) $(CFLAGS) $$($(1)_CFLAGS))
+  endif
+  c_srcfiles :=  $$(patsubst %.c,%,$$(filter %.c,$$($(1)_SOURCES)))
+  $$(foreach src,$$(cpp_srcfiles),$$(eval $$(call Mkdepend,$(1),$$(src),cpp,$(2))))
+  $$(foreach src,$$(c_srcfiles),$$(eval $$(call Mkdepend,$(1),$$(src),c,$(2))))
+  # programs depend on object files
+  $(1): $$($(1)_objects)
+  ldadd :=
+  ifneq ($$(strip $$($(1)_ADDLIBS)),)
+    dirr := $$(patsubst %/,%,$(CURDIR)/$$(dir $$($(1)_ADDLIBS)))
+    name := $$(patsubst lib%.so,%,$$(notdir $$($(1)_ADDLIBS)))
+    ldadd := -l$$(name) -L$$(dirr) -Wl,-rpath,$$(dirr)
+    undefine dirr
+    undefine name
+  endif
+  $(1)_ldflags := $$(strip $$(ldadd) $(LDFLAGS) $$($(1)_LDFLAGS))
+  objects := $$(objects) $$($(1)_objects)
+
+  ifneq ($$(strip $$($(1)_INSTALL_RPATH)),)
+    ifneq ($$(strip $$(POST_INSTALL_COMMAND)),)
+      POST_INSTALL_COMMAND := $$(POST_INSTALL_COMMAND) &&
+    endif
+    POST_INSTALL_COMMAND :=\
+ $$(POST_INSTALL_COMMAND) patchelf --set-rpath $$($(1)_INSTALL_RPATH)\
+ $(INSTALL_DIR)/$(1)
+  endif
+endef
+
+# GNU make for loop sets up make dependencies.
+$(foreach prog,$(bins),$(eval $(call Mkcpprules,$(prog),o,)))
+$(foreach lib,$(libs),$(eval $(call Mkcpprules,$(lib),lo,-shared)))
+
+
+# We are done with these variables:
+undefine ldadd
+undefine id
+undefine counter
+undefine srcfiles
+undefine Mkdepend
+undefine Mkcpprules
+undefine cpp_srcfiles
+undefine c_srcfiles
+undefine c_compile
+undefine cpp_compile
+
+
+
+installed := $(sort $(filter-out $(BUILD_NO_INSTALL),\
+ $(bins)\
+ $(libs)\
+ $(BUILD)\
+\
  $(patsubst %.jsp,%.js,$(wildcard *.jsp))\
  $(patsubst %.cs,%.css,$(wildcard *.cs))\
- $(patsubst %.in,%,$(wildcard *.in))\
- $(patsubst %.bl.in,%.bl,$(wildcard *.bl.in))\
+\
+ $(patsubst %.jsp.bl,%.js,$(wildcard *.jsp.bl))\
+ $(patsubst %.cs.bl,%.css,$(wildcard *.cs.bl))\
+\
+ $(patsubst %.jsp.in,%.js,$(wildcard *.jsp.in))\
+ $(patsubst %.cs.in,%.css,$(wildcard *.cs.in))\
+\
+ $(patsubst %.jsp.bl.in,%.js,$(wildcard *.jsp.bl.in))\
+ $(patsubst %.cs.bl.in,%.css,$(wildcard *.cs.bl.in))\
+\
+ $(patsubst %.js.bl,%.js,$(wildcard *.js.bl))\
+ $(patsubst %.css.bl,%.css,$(wildcard *.css.bl))\
+\
+ $(patsubst %.js.in,%.js,$(wildcard *.js.in))\
+ $(patsubst %.css.in,%.css,$(wildcard *.css.in))\
+\
+ $(patsubst %.js.bl.in,%.js,$(wildcard *.js.bl.in))\
+ $(patsubst %.css.bl.in,%.css,$(wildcard *.css.bl.in))\
+\
+ $(patsubst %.html.in,%.html,$(wildcard *.html.in))\
+ $(patsubst %.html.bl,%.html,$(wildcard *.html.bl))\
+ $(patsubst %.html.bl.in,%.html,$(wildcard *.html.bl.in))\
+ $(wildcard *.js *.css *.html *.gif *.jpg *.png)\
+ $(INSTALLED)\
+))
+
+
+# We tally up all the files that are built including all possible
+# intermediate files, and exclude $(dependfiles) $(objects) which are
+# handled in qb_build/
+built := $(sort\
+ $(bins)\
+ $(libs)\
+ $(BUILD)\
+ $(patsubst %.jsp,%.js,$(wildcard *.jsp))\
+ $(patsubst %.cs,%.css,$(wildcard *.cs))\
  $(bl_scripts)\
  $(in_files)\
 )
 
-# built and installed
-built := $(sort $(built) $(BUILD))
+cleanfiles := $(sort $(built) $(CLEANFILES))
 
-# We could build intermediate files, so we filter them out
-installed := $(sort\
- $(built)\
- $(INSTALLED)\
- $(downloaded)\
- $(wildcard *.js *.css *.html *.gif *.jpg *.png)\
- $(filter-out %.jsp,$(filter-out %.cs,$(filter-out %.in,$(built))))\
+cleanerfiles := $(sort $(CLEANERFILES) $(wildcard *.pyc))
+
+ifeq ($(strip $(top_srcdir)),.)
+    cleanerfiles := $(cleanerfiles) config.make
+endif
+
+
+cleandirs := $(CLEANDIRS)
+
+ifneq ($(strip $(objects)),)
+  cleandirs := $(sort $(cleandirs) qb_build)
+
+$(dependfiles) $(objects): | qb_build
+qb_build:
+	mkdir qb_build
+
+
+
+# Rules to build C/C++ programs
+
+# How to build object files
+qb_build/%.o:
+	$($@_compile) $($@_cflags) -c $< -o $@
+# How to build library shared object files
+qb_build/%.lo:
+	$($@_compile) $($@_cflags) -fPIC $(CFLAGS) -c $< -o $@
+
+
+# How to build depend files that track dependencies so that the objects
+# and programs get automatically rebuilt when a depending source file
+# changes.  By auto-generating dependencies we can come closer to
+# guaranteeing things are rebuilt when they need to be.
+qb_build/%.d:
+	$($@_compile) $($@_cflags) -MM $< -MF $@ -MT $($@_target)
+
+
+# How to build a C/C++ program.
+$(bins) $(libs):
+	$($@_compile) $($@_cflags) $($@_objects) -o $@ $($@_ldflags)
+
+
+# We do not build depend files *.d if we have a command line target with
+# clean or config in it.
+nodepend := $(strip\
+ $(findstring clean, $(MAKECMDGOALS))\
+ $(findstring config, $(MAKECMDGOALS))\
 )
 
-# now add the stuff not installed
-built := $(sort $(built) $(BUILD_NO_INSTALL))
+ifeq ($(nodepend),)
+ifneq ($(strip $(wildcard $(dependfiles))),)
+# include with no error if we need to build them
+-include $(dependfiles)
+endif
+endif
 
+undefine nodepend
+endif # ifneq ($(strip $(objects)),)
 
-cleanfiles := $(sort $(built) $(CLEANFILES))
-cleanerfiles := $(sort $(CLEANERFILES) $(wildcard *.pyc))
 
 
 
@@ -193,7 +404,7 @@ endif
 # default target
 build: $(downloaded) $(built)
 # download before building
-$(built): | $(downloaded)
+$(built): | $(downloaded) $(dependfiles)
 
 
 # run 'make debug' to just spew this stuff:
@@ -203,6 +414,7 @@ debug:
 	@echo "built=$(built)"
 	@echo "downloaded=$(downloaded)"
 	@echo "installed=$(installed)"
+	@echo "dependfiles=$(dependfiles)"
 
 help:
 	@echo -e "  $(MAKE) [TARGET]\n"
@@ -250,30 +462,36 @@ $(in_files):
 
 
 # We have just one install directory for a given source directory
-install: build 
+install: $(built)
 ifneq ($(INSTALL_DIR),)
 	mkdir -p $(INSTALL_DIR)
 ifneq ($(installed),)
 	cp -r $(installed) $(INSTALL_DIR)
 endif
-ifneq ($(POST_INSTALL_COMMAND),)
+ifneq ($(strip $(POST_INSTALL_COMMAND)),)
 	$(POST_INSTALL_COMMAND)
 endif
 endif
 
 
+
 $(top_srcdir)/config.make:
-	echo -e "# This is a generated file\n" > $@
-	echo -e '$(foreach \
-	    var,$(config_vars),\n$(var) := $(strip $($(var))\n))' |\
+	echo "# This is a generated file\n" > $@
+	echo '$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))' |\
 	    sed -e 's/^ $$//' >> $@
 
 download: $(downloaded)
+
 
 clean:
 ifneq ($(cleanfiles),)
 	rm -f $(cleanfiles)
 endif
+ifneq ($(cleandirs),)
+	rm -rf $(cleandirs)
+endif
+
+
 
 distclean cleaner: clean
 ifneq ($(CLEANERDIRS),)
@@ -285,129 +503,4 @@ endif
 ifneq ($(cleanerfiles),)
 	rm -f $(cleanerfiles)
 endif
-
-
-
-
-# After we install the programs we reset the RPATH so that the programs
-# can find the libliquid and libfec shared libraries using patchelf.
-INSTALL_RPATH = patchelf --set-rpath '$(PREFIX)/lib'
-
-POST_INSTALL_COMMAND =\
- $(INSTALL_RPATH) $(BIN)/config_scenario_controllers &&\
- $(INSTALL_RPATH) $(BIN)/config_cognitive_engines &&\
- $(INSTALL_RPATH) $(BIN)/crts_interferer &&\
- $(INSTALL_RPATH) $(BIN)/crts_cognitive_radio &&\
- $(INSTALL_RPATH) $(BIN)/crts_controller
-
-
-
-################################################################################
-# butt ugly from here down
-
-cpp_programs = $(patsubst %_SOURCES,%,$(filter %_SOURCES, $(.VARIABLES)))
-
-dependfiles :=
-id :=
-objects :=
-cppbins :=
-
-# GNU make function to make dependency (*.d) files and object (*.o) files.
-define Mkdepend
- # $(1) = program_name
- # $(2) = C++ source filename without .cpp suffix
- # name needs to be unique
- name := build/$$(notdir $(2)-$$(id)-$(1))
- id := $(words $(counter))
- counter := $$(counter) x
- $$(name).d $$(name).o: $(2).cpp
- $$(name).d_target := $$(name).o
- $$(warn $$(name).d $$(name).o: $(2).cpp)
- dependfiles := $(dependfiles) $$(name).d
- objects := $$(objects) $$(name).o
-endef
-
-# GNU make function to make C++ program dependencies.
-define Mkcpprules
-  # $(1) = program_name
-  counter := x
-  # list os object files for this program
-  objects :=
-  srcfiles :=  $$(patsubst %.cpp,%,$$(filter %.cpp,$$($(1)_SOURCES)))
-  $$(foreach src,$$(srcfiles),$$(eval $$(call Mkdepend,$(1),$$(src))))
-  # programs depend on object files
-  $(1): $$(objects)
-  $(1)_objects := $$(objects)
-  cppbins := $$(cppbins) $(1)
-  CLEANFILES := $$(CLEANFILES) $(1)
-endef
-
-# GNU make for loop sets up make dependencies.
-$(foreach prog,$(cpp_programs),$(eval $(call Mkcpprules,$(prog))))
-
-# We are done with these variables:
-undefine objects
-undefine id
-undefine counter
-undefine srcfiles
-undefine Mkdepend
-undefine Mkcpprules
-
-
-# Add the compiled C++ programs to the list of things to build and
-# install:
-BUILD := $(cppbins)
-
-# Rules to build C++ programs
-
-# How to build object files
-%.o:
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# How to build depend files that track dependencies so that the objects
-# and programs get automatically rebuilt when a depending source file
-# changes.  By auto-generating dependencies we can come closer to
-# guaranteeing things are rebuilt when they need to be.
-%.d:
-	$(CXX) $(CPPFLAGS) -MM $< -MF $@ -MT $($@_target)
-
-# How to build a C++ program.
-$(cppbins):
-	$(CXX) $(CXXFLAGS) $($@_objects) -o $@ $($@_LDFLAGS)
-
-
-# We do not build depend files *.d if we have a command line target with
-# clean or config in it.
-nodepend := $(strip\
- $(findstring clean, $(MAKECMDGOALS))\
- $(findstring config, $(MAKECMDGOALS))\
-)
-
-ifeq ($(nodepend),)
-BUILD_NO_INSTALL := $(dependfiles)
-ifneq ($(strip $(wildcard $(dependfiles))),)
-# include with no error if we need to build them
--include $(dependfiles)
-endif
-endif
-
-BUILD_NO_INSTALL := $(BUILD_NO_INSTALL) logs/convert_logs_bin_to_octave
-
-build: $(dependfiles)
-
-clean: localclean
-
-localclean:
-	rm -f build/*.o build/*.d
-
-
-logs/convert_logs_bin_to_octave: convert_logs_bin_to_octave
-	cp $< $@
-
-
-# Add this directory to the recursive build system.  This make file is the
-# only compiled code in this project, so this make file is larger than
-# others.  If more compiled C/C++ program are added to other directories
-# this file should spill some into common.make
-include $(top_srcdir)/common.make
 
