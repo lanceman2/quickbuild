@@ -20,13 +20,8 @@ endif
 #  Common variables that are set with the package
 ###################################################################
 
-ifndef PACKAGE_NAME
-  $(error PACKAGE_NAME was not defined)
-endif
 
-VERSION ?= 0.1.0
-
-TAR_NAME ?= $(PACKAGE_NAME)-$(VERSION)
+# we are avoiding package specific constants
 
 
 ###################################################################
@@ -34,11 +29,17 @@ TAR_NAME ?= $(PACKAGE_NAME)-$(VERSION)
 
 -include $(top_srcdir)/config.make
 
+
 ###################################################################
 #  Common variables that are set and saved by the configure step
 ###################################################################
 
+ifdef TAR_NAME
+# TAR_NAME is usually from PACKAGE-VERSION
 PREFIX ?= $(HOME)/installed/$(TAR_NAME)
+else
+PREFIX ?= $(HOME)/installed
+endif
 
 # How to convert .cs to .css
 #   yui-compressor --line-break 60 --type css
@@ -86,7 +87,7 @@ CXXFLAGS ?= -g -Wall
 #  *.dl is a script that downloads *
 #  *.bl is a script that makes *
 #  .js, .css, .html are all installed and served
-#  .d C/C++ depend file
+#  .d C or C++ depend file
 #  .o object file to build compiled C/C++ program
 #  .lo shared object file to compile shared library
 #  .so dynamic shared object library
