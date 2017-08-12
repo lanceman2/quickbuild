@@ -41,7 +41,7 @@
 #
 ##########################################################################
 
-SHELL = bash
+SHELL = /bin/bash
 
 ifndef top_srcdir
     $(error top_srcdir was not defined)
