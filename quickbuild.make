@@ -7,6 +7,39 @@
 # A software build system for web apps with served public static files and
 # installed executables.
 # Has build rules based on file suffixes.
+#
+#
+##########################################################################
+# Compressing this file:
+#
+# Run:
+#
+#   sed -e 's/^\s*\#.*$//g' -e '/^$/d' quickbuild.make
+#
+#
+# Making a networked bootstrap script that gets this file and compresses
+# it:
+#
+# Run (bash without leading #)):
+#
+#   set -ex
+#
+#   tag=master
+#   wget https://raw.githubusercontent.com/lanceman2/quickbuild/$tag/quickbuild.make -O - |\
+#   sed -e 's/^\s*\#.*$//g' -e '/^$/d' > quickbuild.make
+#
+#
+# Consider adding sha512sum check with:
+#
+#   sha512sum quickbuild.make > quickbuild.make.sha512
+#
+#
+# and later:
+#
+#   sha512sum -c quickbuild.make.sha512
+#
+#
+##########################################################################
 
 
 ifndef top_srcdir
