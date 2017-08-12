@@ -1,6 +1,7 @@
 # This make file will make everything in this package
 
-# This makefile does not use quickbuild.
+# This makefile does not use quickbuild but sub-processes
+# that this starts do.
 
 SHELL = /bin/bash
 
@@ -11,8 +12,11 @@ subdirs :=\
 )
 
 bootstrap_dirs := $(strip\
- $(filter-out $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)),\
- $(patsubst %/GNUmakefile.in,%,$(wildcard */GNUmakefile.in))))
+ $(patsubst %/bootstrap,%,$(wildcard */bootscrap)))
+
+repoclean_dirs := $(strip\
+ $(patsubst %/RepoClean,%,$(wildcard */RepoClean)))
+
 
 built_makefiles := $(sort\
  $(patsubst %/GNUmakefile.in,%/GNUmakefile,\
@@ -31,9 +35,17 @@ build install config test: $(qb_copies)
 ifneq ($(bootstrap_dirs),)
 bootstrap:
 	for d in $(bootstrap_dirs) ; do\
-	    if !(cd $$d && ./bootstrap.bash) ; then exit 1; fi;\
+	    if !(cd $$d && ./bootstrap) ; then exit 1; fi;\
 	    done
 build: | bootstrap
+endif
+
+ifneq ($(repoclean_dirs),)
+repoclean:
+	for d in $(repoclean_dirs) ; do\
+	    if !(cd $$d && ./RepoClean) ; then exit 1; fi;\
+	    done
+clean: | repoclean
 endif
 
 
