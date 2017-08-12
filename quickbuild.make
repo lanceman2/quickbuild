@@ -29,7 +29,7 @@
 #   sed -e 's/^\s*\#.*$//g' -e '/^$/d' > quickbuild.make
 #
 #
-# Consider adding sha512sum check with:
+# Consider adding sha512sum check if you use a particular tag with:
 #
 #   sha512sum quickbuild.make > quickbuild.make.sha512
 #
@@ -41,6 +41,7 @@
 #
 ##########################################################################
 
+SHELL = bash
 
 ifndef top_srcdir
     $(error top_srcdir was not defined)

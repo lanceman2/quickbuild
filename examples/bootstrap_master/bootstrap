@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -ex
+
+cd $(dirname ${BASH_SOURCE[0]})
+
+# We do not want make to be able to run until this
+# script is run:
+cp GNUmakefile.in GNUmakefile
+
+tag=master
+
+if [ -e quickbuild.make ] ; then
+    echo "quickbuild.make exists"
+    echo "If you wish to regenerate it remove it first"
+    exit 1
+fi
+
+
+echo "# This is a downloaded/generated file" > quickbuild.make.tmp
+
+# get and compress the quickbuild.make file
+wget\
+ https://raw.githubusercontent.com/lanceman2/quickbuild/$tag/quickbuild.make\
+ -O - |\
+ sed -e 's/^\s*\#.*$//g' -e '/^$/d' >> quickbuild.make.tmp
+
+mv quickbuild.make.tmp quickbuild.make
+
