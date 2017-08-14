@@ -7,4 +7,3 @@ rm -rf qb_build
 
 # not usually in a script like this, but needed for this test case:
 rm -rf installed
-

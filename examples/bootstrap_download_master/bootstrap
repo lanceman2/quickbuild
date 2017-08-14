@@ -11,13 +11,15 @@ cp GNUmakefile.in GNUmakefile
 tag=master
 
 if [ -e quickbuild.make ] ; then
+    set +x
     echo "quickbuild.make exists"
     echo "If you wish to regenerate it remove it first"
     exit 1
 fi
 
-
+set +e
 echo "# This is a downloaded/generated file" > quickbuild.make.tmp
+set -e
 
 # get and compress the quickbuild.make file
 wget\

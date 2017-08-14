@@ -12,10 +12,13 @@ subdirs :=\
 )
 
 bootstrap_dirs := $(strip\
- $(patsubst %/bootstrap,%,$(wildcard */bootscrap)))
+ $(patsubst %/bootstrap,%,$(wildcard */bootstrap)))
 
 repoclean_dirs := $(strip\
  $(patsubst %/RepoClean,%,$(wildcard */RepoClean)))
+
+test_dirs := $(strip\
+ $(patsubst %/test,%,$(wildcard */test)))
 
 
 built_makefiles := $(sort\
@@ -23,48 +26,49 @@ built_makefiles := $(sort\
  $(wildcard */GNUmakefile.in)))
 
 installed := $(wildcard */installed)
-qb_copies := $(patsubst %,%/quickbuild.make,$(subdirs))
-qb_copies_exist := $(strip $(wildcard $(qb_copies)))
 
+.PHONY: build clean bootstrap repoclean
 
-build install config test: $(qb_copies)
+build install config:
 	for d in $(subdirs) ; do\
 	    if ! $(MAKE) -C $$d $@ ; then exit 1; fi;\
 	    done
 
-ifneq ($(bootstrap_dirs),)
 bootstrap:
 	for d in $(bootstrap_dirs) ; do\
+	    if [ -e "$$d/quickbuild.make" ] ; then continue; fi;\
 	    if !(cd $$d && ./bootstrap) ; then exit 1; fi;\
 	    done
 build: | bootstrap
-endif
 
-ifneq ($(repoclean_dirs),)
+debug:
+	@echo "bootstrap_dirs = $(bootstrap_dirs)"
+	@echo "repoclean_dirs = $(repoclean_dirs)"
+
+
 repoclean:
 	for d in $(repoclean_dirs) ; do\
 	    if !(cd $$d && ./RepoClean) ; then exit 1; fi;\
 	    done
 clean: | repoclean
-endif
 
 
 install: | build
-test: | install 
+test: | install
 
-$(qb_copies):
-	cd $(dir $@) && ln -s ../../quickbuild.make .
-
+test:
+	err= ;\
+	for d in $(test_dirs) ; do\
+	    if !(cd $$d && ./test) ; then err="${err}\n $$d FAILED\n"; fi;\
+	    done;\
+	if [ -n "$$err" ] ; then echo -e "$${err}"; exit 1; fi;\
 
 clean cleaner distclean:
-ifneq ($(qb_copies_exist),)
 ifneq ($(strip $(installed)),)
 	rm -rf $(installed)
 endif
 	for d in $(subdirs) ; do\
 	    $(MAKE) -C $$d cleaner ; done
-	rm -f $(qb_copies)
-endif
 ifeq ($(bootstrap_dirs),)
 	rm -f $(built_makefiles)
 endif
