@@ -40,6 +40,8 @@ build install:
 	    if ! $(MAKE) -C $$d $@ ; then exit 1; fi;\
 	    done
 
+config: $(config_makes)
+
 $(config_makes): | bootstrap
 	PREFIX=$(abspath $(dir $@))/installed $(MAKE) -C $(dir $@) config
 
