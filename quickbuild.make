@@ -440,6 +440,7 @@ $(built): | $(downloaded) $(dependfiles)
 # run 'make debug' to just spew this stuff:
 debug:
 	@echo "cleanerfiles=$(cleanerfiles)"
+	@echo "cleanfiles=$(cleanfiles)"
 	@echo "INSTALL_DIR=$(INSTALL_DIR)"
 	@echo "built=$(built)"
 	@echo "downloaded=$(downloaded)"
