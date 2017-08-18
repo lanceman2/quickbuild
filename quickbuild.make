@@ -512,7 +512,7 @@ endif
 
 $(top_srcdir)/config.make:
 	echo "# This is a generated file\n" > $@
-	echo '$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))' |\
+	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
 
 download: $(downloaded)

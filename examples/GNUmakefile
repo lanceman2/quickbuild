@@ -21,6 +21,8 @@ test_dirs := $(strip\
  $(patsubst %/test,%,$(wildcard */test)))
 
 
+
+
 built_makefiles := $(sort\
  $(patsubst %/GNUmakefile.in,%/GNUmakefile,\
  $(wildcard */GNUmakefile.in)))
@@ -33,6 +35,7 @@ build install config:
 	for d in $(subdirs) ; do\
 	    if ! $(MAKE) -C $$d $@ ; then exit 1; fi;\
 	    done
+
 
 bootstrap:
 	for d in $(bootstrap_dirs) ; do\
