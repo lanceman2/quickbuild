@@ -511,7 +511,7 @@ endif
 
 
 $(top_srcdir)/config.make:
-	echo "# This is a generated file\n" > $@
+	echo -e "# This is a generated file\n" > $@
 	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
 
