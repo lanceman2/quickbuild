@@ -8,7 +8,7 @@ SHELL = /bin/bash
 subdirs :=\
  $(sort\
  $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile))\
- $(patsubst %/GNUmakefile.in,%,$(wildcard */GNUmakefile.in))\
+ $(patsubst %/GNUmakefile.am,%,$(wildcard */GNUmakefile.am))\
 )
 
 # We make a config.make file for each example directory.
@@ -25,10 +25,9 @@ test_dirs := $(strip\
 
 
 
-
 built_makefiles := $(sort\
- $(patsubst %/GNUmakefile.in,%/GNUmakefile,\
- $(wildcard */GNUmakefile.in)))
+ $(patsubst %/GNUmakefile.am,%/GNUmakefile,\
+ $(wildcard */GNUmakefile.am)))
 
 installed := $(wildcard */installed)
 
@@ -64,15 +63,20 @@ repoclean:
 clean: | repoclean
 
 
-install: | build
-test: | install
+install: build
+test: install
 
 test:
-	err= ;\
+	err= ; fcount=0 ;\
 	for d in $(test_dirs) ; do\
-	    if !(cd $$d && ./test) ; then err="${err}\n $$d FAILED\n"; fi;\
+	    echo -e "\n    ----- Running test in $$d -----\n";\
+	    if !(cd $$d && ./test) ; then\
+	    err="${err}\n test in $$d FAILED\n";\
+	    echo -e "\n   test in $$d FAILED\n";\
+	    let fcount=$${fcount}+1; fi;\
 	    done;\
-	if [ -n "$$err" ] ; then echo -e "$${err}"; exit 1; fi;\
+	if [ -n "$$err" ] ; then echo -e "\n\n  $${fcount} test(s) failed\n$${err}\n"; exit 1; fi;
+	@echo -e "\n\n   All $(words $(test_dirs)) tests Succeeded\n"
 
 clean cleaner distclean:
 ifneq ($(strip $(installed)),)
