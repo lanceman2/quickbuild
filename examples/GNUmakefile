@@ -11,6 +11,9 @@ subdirs :=\
  $(patsubst %/GNUmakefile.in,%,$(wildcard */GNUmakefile.in))\
 )
 
+# We make a config.make file for each example directory.
+config_makes := $(patsubst %,%/config.make,$(subdirs))
+
 bootstrap_dirs := $(strip\
  $(patsubst %/bootstrap,%,$(wildcard */bootstrap)))
 
@@ -31,10 +34,16 @@ installed := $(wildcard */installed)
 
 .PHONY: build clean bootstrap repoclean
 
-build install config:
+build: $(config_makes)
+
+build install:
 	for d in $(subdirs) ; do\
 	    if ! $(MAKE) -C $$d $@ ; then exit 1; fi;\
 	    done
+
+$(config_makes): | bootstrap
+	PREFIX=$(abspath $(dir $@))/installed $(MAKE) -C $(dir $@) config
+
 
 
 bootstrap:
@@ -42,7 +51,6 @@ bootstrap:
 	    if [ -e "$$d/quickbuild.make" ] ; then continue; fi;\
 	    if !(cd $$d && ./bootstrap) ; then exit 1; fi;\
 	    done
-build: | bootstrap
 
 debug:
 	@echo "bootstrap_dirs = $(bootstrap_dirs)"
@@ -75,4 +83,5 @@ endif
 ifeq ($(bootstrap_dirs),)
 	rm -f $(built_makefiles)
 endif
+	for d in $(subdirs) ; do rm -rf $$d/installed ; done
 

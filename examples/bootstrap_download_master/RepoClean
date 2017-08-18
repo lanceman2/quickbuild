@@ -4,6 +4,3 @@ set -ex
 
 rm -f GNUmakefile hello quickbuild.make quickbuild.make.tmp config.make
 rm -rf qb_build
-
-# not usually in a script like this, but needed for this test case:
-rm -rf installed

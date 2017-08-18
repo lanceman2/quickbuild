@@ -411,11 +411,6 @@ endif # ifneq ($(strip $(objects)),)
 
 
 
-
-# this will make config.make automatically
-config:
-
-
 ifneq ($(subdirs),)
 # directory recursive makes
 define Rec
@@ -437,7 +432,7 @@ $(rec):
 endif
 
 # default target
-build: $(downloaded) $(built)
+build: $(downloaded) $(built) $(top_srcdir)/config.make
 # download before building
 $(built): | $(downloaded) $(dependfiles)
 
@@ -509,6 +504,8 @@ endif
 endif
 
 
+
+config: $(top_srcdir)/config.make
 
 $(top_srcdir)/config.make:
 	echo -e "# This is a generated file\n" > $@
