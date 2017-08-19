@@ -1,4 +1,4 @@
-libhello.so_SOURCES := hello.c
+libhello.so_SOURCES := hello.cpp
 
 INSTALL_DIR = $(PREFIX)/lib
 

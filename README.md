@@ -38,11 +38,14 @@ quickbuild will only generate files in the directories in the source
 directory, put another why; the build directory is the source directory.  Why?
 
   * quickbuild does not require a *configure* step which is where this kind
-    of thing is commonly done, for example in Cmake, and autoConf
+    of thing is commonly done, for example in Cmake, and GNU autoConf
 
-  * this is makes build and test run development cycles simpler,
+  * this makes build and test run development cycles simpler,
 
   * less software build steps.
+
+TODO: Add the setting of the build directory without changing how things
+currently work when not setting a separate build directory tree.
 
 
 ## Development

@@ -1,9 +1,7 @@
-top_srcdir := .
-
 hello_SOURCES := hello.c
 
 INSTALL_DIR = $(PREFIX)/bin
 
 CLEANERFILES := GNUmakefile
 
-include $(top_srcdir)/quickbuild.make
+include ./quickbuild.make

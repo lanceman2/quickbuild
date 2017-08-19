@@ -1,4 +1,4 @@
-#! This is a GNU make file that uses GNU make extensions.
+# This is a GNU make file that uses GNU make extensions.
 
 # This file is part of the quickbuild software package
 # https://github.com/lanceman2/quickbuild
@@ -43,9 +43,86 @@
 
 SHELL = /bin/bash
 
-ifndef top_srcdir
-    $(error top_srcdir was not defined)
+#########################################################################
+#########################################################################
+# We define this to setup for building in separate build tree with a
+# command like (unlike autotools configure):
+#
+#     make BUILD_PREFIX=$build_prefix
+#
+# This can't be like autotool method (cd build && $path_to_configure)
+# because we are running make already.
+#
+
+ifdef BUILD_PREFIX
+
+ifneq ($(strip $(wildcard $(BUILD_PREFIX)/GNUmakefile)),)
+$(error BUILD_PREFIX makefile $(BUILD_PREFIX)/GNUmakefile exists already)
 endif
+
+this_file := $(notdir $(lastword $(MAKEFILE_LIST)))
+top_srcdir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+abs_top_srcdir := $(abspath $(top_srcdir))
+
+$(shell\
+ set -ex ;\
+ mkdir -p $(BUILD_PREFIX) ;\
+ echo -e "# This is a generated file\n" > $(BUILD_PREFIX)/$(this_file) ;\
+ echo -e "top_srcdir := $(abs_top_srcdir)" >> $(BUILD_PREFIX)/$(this_file) ;\
+ cat $(abs_top_srcdir)/$(this_file) >> $(BUILD_PREFIX)/$(this_file) ;\
+ function cp_make()\
+ {\
+ while [ -n "$$1" ] ; do \
+ if [ -f $(abs_top_srcdir)/$$1 ] ; then\
+ mkdir -p $$(dirname $(BUILD_PREFIX)/$$1) ;\
+ cp $(abs_top_srcdir)/$$1 $(BUILD_PREFIX)/$$1 ;\
+ cp_make $$1/*/GNUmakefile ;\
+ fi ; shift ; done ;\
+} ;\
+ cp_make */GNUmakefile ;\
+ cp $(abs_top_srcdir)/GNUmakefile $(BUILD_PREFIX) )
+
+define n =
+
+
+
+endef
+
+# TODO: make this not be an error but exit with success
+$(error "$(n)   made build directory: $(BUILD_PREFIX)$(n)")
+
+endif # ifdef BUILD_PREFIX
+
+#########################################################################
+#########################################################################
+
+
+
+
+# We define top_builddir this way which assumes that
+# this file is in the top build directory.
+top_builddir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+
+ifdef top_srcdir
+$(error top_srcdir should not be defined)
+endif
+
+ifndef top_srcdir
+# We are building in the source tree
+top_srcdir := $(top_builddir)
+srcdir := .
+else
+# We are not building in the source tree
+# We should have both top_srcdir and srcdir be full path
+srcdir := $(patsubst $(abspath $(top_builddir))/%, $(abspath $(top_srcdir))/%,\
+ $(abspath $(dir $(firstword $(MAKEFILE_LIST)))))
+endif
+
+$(warning top_srcdir=$(top_srcdir) srcdir=$(srcdir)\
+ top_builddir=$(top_builddir))
+
+
+-include $(top_builddir)/config.make
 
 
 -include $(top_srcdir)/package.make
@@ -60,8 +137,6 @@ endif
 
 ###################################################################
 
-
--include $(top_srcdir)/config.make
 
 
 ###################################################################
@@ -154,7 +229,8 @@ config_vars :=\
  CSS_COMPRESS\
  NODEJS_SHABANG\
  CFLAGS\
- CXXFLAGS
+ CXXFLAGS\
+ TOP_BUILDDIR
 
 # Strings we replace all *.in files.  For example: we replace
 # @SERVER_PORT@ with the value of $(SERVER_PORT) in "foo.in" to make
@@ -183,7 +259,7 @@ $(foreach targ,$(dl_scripts),$(eval $(call Dependify,$(targ),dl)))
 # In files, FILE.in, that build files named FILE
 # in_files is the things built
 in_files := $(patsubst %.in,%,$(wildcard *.in))
-$(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(top_srcdir)/config.make)))
+$(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(top_builddir)/config.make)))
 
 # build (bl) scripts FILE.bl that build files named FILE
 # bl_scripts is the files built
@@ -353,7 +429,7 @@ cleanfiles := $(sort $(built) $(CLEANFILES))
 
 cleanerfiles := $(sort $(CLEANERFILES) $(wildcard *.pyc))
 
-ifeq ($(strip $(top_srcdir)),.)
+ifeq ($(strip $(top_builddir)),.)
     cleanerfiles := $(cleanerfiles) config.make
 endif
 
@@ -432,7 +508,7 @@ $(rec):
 endif
 
 # default target
-build: $(downloaded) $(built) $(top_srcdir)/config.make
+build: $(downloaded) $(built) $(top_builddir)/config.make
 # download before building
 $(built): | $(downloaded) $(dependfiles)
 
@@ -506,9 +582,9 @@ endif
 
 
 
-config: $(top_srcdir)/config.make
+config: $(top_builddir)/config.make
 
-$(top_srcdir)/config.make:
+$(top_builddir)/config.make:
 	echo -e "# This is a generated file\n" > $@
 	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
