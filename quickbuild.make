@@ -43,10 +43,14 @@
 
 SHELL = /bin/bash
 
+# .ONESHELL = all the lines in the recipe be passed to a single invocation
+# of the shell.  This is very important.
+.ONESHELL:
+
 #########################################################################
 #########################################################################
 # We define this to setup for building in separate build tree with a
-# command like (unlike autotools configure):
+# command like (differently to how autotools configure does this):
 #
 #     make BUILD_PREFIX=$build_prefix
 #
@@ -54,7 +58,25 @@ SHELL = /bin/bash
 # because we are running make already.
 #
 
+# We don't let a generated copy of this file use the BUILD_PREFIX
+# functionality because the source files would not be in the directory is
+# and this file has already been hacked up.  The generated copy has
+# top_srcdir defined.
+ifdef top_srcdir
+# this is a build tree copy
 ifdef BUILD_PREFIX
+$(error You cannot make a build tree with a build tree that is not a source tree)
+endif
+endif
+
+
+ifdef BUILD_PREFIX
+
+# someone ran:
+#
+#    make BUILD_PREFIX=bla_bla_bla
+#
+# So now we make a new build directory tree:
 
 ifneq ($(strip $(wildcard $(BUILD_PREFIX)/GNUmakefile)),)
 $(error BUILD_PREFIX makefile $(BUILD_PREFIX)/GNUmakefile exists already)
@@ -64,13 +86,17 @@ this_file := $(notdir $(lastword $(MAKEFILE_LIST)))
 top_srcdir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
 abs_top_srcdir := $(abspath $(top_srcdir))
 
-$(shell\
- set -ex ;\
- mkdir -p $(BUILD_PREFIX) ;\
- echo -e "# This is a generated file\n" > $(BUILD_PREFIX)/$(this_file) ;\
- echo -e "top_srcdir := $(abs_top_srcdir)" >> $(BUILD_PREFIX)/$(this_file) ;\
- cat $(abs_top_srcdir)/$(this_file) >> $(BUILD_PREFIX)/$(this_file) ;\
- function cp_make()\
+# build_prefix is the only target in this case: just running a bash script
+# that creates a build directory that mirrors the source tree.
+
+build_prefix:
+	set -e
+	mkdir -p $(BUILD_PREFIX)
+	echo -e "# This is a generated file\n" > $(BUILD_PREFIX)/$(this_file)
+	echo -e "ifdef top_srcdir\n\$$(error top_srcdir should not be defined)\nendif\n" >> $(BUILD_PREFIX)/$(this_file)
+	echo -e "\ntop_srcdir := $(abs_top_srcdir)\n\n" >> $(BUILD_PREFIX)/$(this_file)
+	cat $(abs_top_srcdir)/$(this_file) >> $(BUILD_PREFIX)/$(this_file)
+	function cp_make()\
  {\
  while [ -n "$$1" ] ; do \
  if [ -f $(abs_top_srcdir)/$$1 ] ; then\
@@ -78,52 +104,101 @@ $(shell\
  cp $(abs_top_srcdir)/$$1 $(BUILD_PREFIX)/$$1 ;\
  cp_make $$1/*/GNUmakefile ;\
  fi ; shift ; done ;\
-} ;\
- cp_make */GNUmakefile ;\
- cp $(abs_top_srcdir)/GNUmakefile $(BUILD_PREFIX) )
+}
+	cp_make */GNUmakefile
+	cp $(abs_top_srcdir)/GNUmakefile $(BUILD_PREFIX)
+	set -x
+	echo -e "\n  made build directory: $(BUILD_PREFIX)\n"
 
-define n =
 
-
-
-endef
-
-# TODO: make this not be an error but exit with success
-$(error "$(n)   made build directory: $(BUILD_PREFIX)$(n)")
-
-endif # ifdef BUILD_PREFIX
 
 #########################################################################
+else # ifdef BUILD_PREFIX
 #########################################################################
 
 
+
+ifndef subdirs
+subdirs := $(sort $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)))
+endif
+
+ifneq ($(subdirs),)
+
+ifdef SUBDIRS # user interface so they may reorder the directories
+subdirs := $(SUBDIRS)
+endif
+
+#########################################################################
+#                  recursion
+#########################################################################
+#
+# if subdirs is not an empty string we recurse and then call the
+# non-recursing make (subdirs=) as we pop back out of the recurse.
+#
+
+build: rec_build
+install: rec_install
+download: rec_download
+config: rec_config
+debug: rec_debug
+clean: rec_clean
+cleaner: rec_cleaner
+distclean: rec_distclean
+
+rec_build rec_clean rec_cleaner\
+ rec_distclean rec_install rec_download\
+ rec_config rec_debug:
+	set -e
+	for d in $(subdirs) ; do\
+          $(MAKE) -C $$d $(patsubst rec_%,%,$(@)); done
+	$(MAKE) subdirs= $(patsubst rec_%,%,$(@))
+
+
+else # ifneq ($(subdirs),)
+
+#########################################################################
+#                  NO recursion
+#########################################################################
 
 
 # We define top_builddir this way which assumes that
 # this file is in the top build directory.
 top_builddir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
 
-ifdef top_srcdir
-$(error top_srcdir should not be defined)
-endif
-
 ifndef top_srcdir
+
 # We are building in the source tree
 top_srcdir := $(top_builddir)
 srcdir := .
 else
 # We are not building in the source tree
 # We should have both top_srcdir and srcdir be full path
+ifneq ($(top_builddir),.)
 srcdir := $(patsubst $(abspath $(top_builddir))/%, $(abspath $(top_srcdir))/%,\
  $(abspath $(dir $(firstword $(MAKEFILE_LIST)))))
+else
+srcdir := $(top_srcdir)
 endif
 
-$(warning top_srcdir=$(top_srcdir) srcdir=$(srcdir)\
- top_builddir=$(top_builddir))
+endif
+
+
+ifneq ($(strip $(srcdir)),.)
+# Tell make where to find source files, because we are building
+# from a directory different than the source directory.
+VPATH := $(srcdir)
+#vpath %.cpp $(srcdir)
+#vpath %.c $(srcdir)
+#vpath %.h $(srcdir)
+#vpath %.hpp $(srcdir)
+#vpath %.jsp $(srcdir)
+#vpath %.cs $(srcdir)
+#vpath %.d $(srcdir)
+endif
+
 
 
 -include $(top_builddir)/config.make
-
 
 -include $(top_srcdir)/package.make
 
@@ -176,10 +251,6 @@ CFLAGS ?= -g -Wall
 CXXFLAGS ?= -g -Wall
 
 
-# .ONESHELL = all the lines in the recipe be passed to a single invocation
-# of the shell
-.ONESHELL:
-
 .SUFFIXES: # Delete the default suffixes
 # Define our suffix list
 .SUFFIXES: .js .css .html .js .css .jsp .cs .dl .bl .c .cpp .h .hpp .d .o .lo .so
@@ -220,7 +291,6 @@ CXXFLAGS ?= -g -Wall
 
 .DEFAULT_GOAL := build
 
-subdirs := $(sort $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)))
 
 
 config_vars :=\
@@ -243,7 +313,7 @@ define Seds
   sed_commands := $$(sed_commands) -e 's!@$(1)@!$$(strip $$($(1)))!g'
 endef
 $(foreach cmd,$(seds),$(eval $(call Seds,$(cmd))))
-undefine Seds
+undefine Sedsinstalled
 undefine seds
 # now we have the sed_commands for making * from *.in files
 
@@ -487,26 +557,6 @@ endif # ifneq ($(strip $(objects)),)
 
 
 
-ifneq ($(subdirs),)
-# directory recursive makes
-define Rec
-  $$(patsubst rec_%,%,$(1)): | $(1)
-  # We wish to recurse before local
-endef
-rec := rec_build rec_clean rec_cleaner\
- rec_distclean rec_install rec_download\
- rec_config rec_debug
-$(foreach targ,$(rec),$(eval $(call Rec,$(targ))))
-# Keep the building in sub-directories first
-#$(downloaded) $(built): | rec_build
-undefine Rec
-
-$(rec):
-	for d in $(subdirs) ; do\
- $(MAKE) -C $$d $(patsubst rec_%,%,$(@)) || exit 1 ;\
- done
-endif
-
 # default target
 build: $(downloaded) $(built) $(top_builddir)/config.make
 # download before building
@@ -569,7 +619,11 @@ $(in_files):
 
 
 # We have just one install directory for a given source directory
-install: $(built)
+# TODO: If the 'build' target has targets in other directories
+# the install needs, this will fail without running:
+#   make   before   make install
+#
+install: $(installed)
 ifneq ($(INSTALL_DIR),)
 	mkdir -p $(INSTALL_DIR)
 ifneq ($(installed),)
@@ -613,3 +667,7 @@ ifneq ($(cleanerfiles),)
 	rm -f $(cleanerfiles)
 endif
 
+
+endif # ifneq ($(subdirs),)  else
+
+endif # ifdef BUILD_PREFIX   else
