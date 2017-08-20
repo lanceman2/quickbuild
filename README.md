@@ -89,4 +89,6 @@ the examples directory to build/test all the example packages.
 
 
 We intend to keep the compressed (comments and blanks lines removed) copy
-of quickbuild.make by under 1000 lines.
+of quickbuild.make by under 1000 lines.  2017 Aug 20 compressed line
+count is 339 with 673 before compressing.
+

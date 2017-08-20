@@ -7,9 +7,13 @@ SHELL = /bin/bash
 
 subdirs :=\
  $(sort\
+ $(filter-out BUILD_%,\
  $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile))\
  $(patsubst %/GNUmakefile.am,%,$(wildcard */GNUmakefile.am))\
+ )\
 )
+
+builddirs := $(patsubst %,BUILD_%,$(subdirs))
 
 # We make a config.make file for each example directory.
 config_makes := $(patsubst %,%/config.make,$(subdirs))
@@ -21,8 +25,9 @@ repoclean_dirs := $(strip\
  $(patsubst %/RepoClean,%,$(wildcard */RepoClean)))
 
 test_dirs := $(strip\
- $(patsubst %/test,%,$(wildcard */test)))
-
+ $(filter-out BUILD_%,\
+ $(patsubst %/test,%,$(wildcard */test))))
+#test_dirs := $(test_dirs) $(patsubst %,BUILD_%,$(test_dirs))
 
 
 built_makefiles := $(sort\
@@ -31,12 +36,15 @@ built_makefiles := $(sort\
 
 installed := $(wildcard */installed)
 
-.PHONY: build clean bootstrap repoclean
+.PHONY: build clean cleaner distclean bootstrap repoclean install
 
 build: $(config_makes)
 
-build install:
-	for d in $(subdirs) ; do\
+$(builddirs):
+	$(MAKE) -C $$d BUILD_PREFIX=$@
+
+build install: $(builddirs)
+	for d in $(subdirs) $(builddirs) ; do\
 	    if ! $(MAKE) -C $$d $@ ; then exit 1; fi;\
 	    done
 
@@ -70,7 +78,7 @@ test: install
 
 test:
 	err= ; fcount=0 ;\
-	for d in $(test_dirs) ; do\
+	for d in $(test_dirs) $(builddirs) ; do\
 	    echo -e "\n    ----- Running test in $$d -----\n";\
 	    if !(cd $$d && ./test) ; then\
 	    err="${err}\n test in $$d FAILED\n";\
@@ -81,6 +89,7 @@ test:
 	@echo -e "\n\n   All $(words $(test_dirs)) tests Succeeded\n"
 
 clean cleaner distclean:
+	rm -rf $(builddirs)
 ifneq ($(strip $(installed)),)
 	rm -rf $(installed)
 endif
