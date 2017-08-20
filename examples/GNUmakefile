@@ -15,8 +15,6 @@ subdirs :=\
 
 builddirs := $(patsubst %,BUILD_%,$(subdirs))
 
-# We make a config.make file for each example directory.
-config_makes := $(patsubst %,%/config.make,$(subdirs))
 
 bootstrap_dirs := $(strip\
  $(patsubst %/bootstrap,%,$(wildcard */bootstrap)))
@@ -38,8 +36,6 @@ installed := $(wildcard */installed)
 
 .PHONY: build clean cleaner distclean bootstrap repoclean install
 
-build: $(config_makes)
-
 $(builddirs): bootstrap
 	$(MAKE) -C $(patsubst BUILD_%,%,$@) BUILD_PREFIX=../$@
 
@@ -48,13 +44,8 @@ $(builddirs): bootstrap
 # build them in the source directories.
 build install: $(builddirs)
 	for d in $(builddirs) $(subdirs) ; do\
-	    if ! $(MAKE) -C $$d $@ ; then exit 1; fi;\
+	    if ! PREFIX=BUILD_$$d $(MAKE) -C $$d $@ ; then exit 1; fi;\
 	    done
-
-config: $(config_makes)
-
-$(config_makes): | bootstrap
-	PREFIX=$(abspath $(dir $@))/installed $(MAKE) -C $(dir $@) config
 
 
 

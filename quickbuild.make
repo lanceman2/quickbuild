@@ -71,7 +71,7 @@ endif
 # Make sure that the source tree that we are using has not been built yet.
 # If make ever ran in the top_srcdir then config.make will exist.
 ifneq ($(strip $(wildcard $(top_srcdir)/config.make)),)
-$(error You have alread built this package in $(top_srcdir)\
+$(error You have already built this package in $(top_srcdir)\
  so now you cannot build it here too)
 endif
 
