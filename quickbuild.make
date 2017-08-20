@@ -67,6 +67,14 @@ ifdef top_srcdir
 ifdef BUILD_PREFIX
 $(error You cannot make a build tree with a build tree that is not a source tree)
 endif
+
+# Make sure that the source tree that we are using has not been built yet.
+# If make ever ran in the top_srcdir then config.make will exist.
+ifneq ($(strip $(wildcard $(top_srcdir)/config.make)),)
+$(error You have alread built this package in $(top_srcdir)\
+ so now you cannot build it here too)
+endif
+
 endif
 
 

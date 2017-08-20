@@ -43,8 +43,11 @@ build: $(config_makes)
 $(builddirs): bootstrap
 	$(MAKE) -C $(patsubst BUILD_%,%,$@) BUILD_PREFIX=../$@
 
+
+# We must build and run it in the BUILD_ directories before we
+# build them in the source directories.
 build install: $(builddirs)
-	for d in $(subdirs) $(builddirs) ; do\
+	for d in $(builddirs) $(subdirs) ; do\
 	    if ! $(MAKE) -C $$d $@ ; then exit 1; fi;\
 	    done
 
