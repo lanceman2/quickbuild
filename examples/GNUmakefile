@@ -40,8 +40,8 @@ installed := $(wildcard */installed)
 
 build: $(config_makes)
 
-$(builddirs):
-	$(MAKE) -C $$d BUILD_PREFIX=$@
+$(builddirs): bootstrap
+	$(MAKE) -C $(patsubst BUILD_%,%,$@) BUILD_PREFIX=../$@
 
 build install: $(builddirs)
 	for d in $(subdirs) $(builddirs) ; do\
