@@ -2,5 +2,5 @@
 
 set -ex
 
-rm -f GNUmakefile hello quickbuild.make quickbuild.make.tmp config.make
+rm -f hello quickbuild.make quickbuild.make.tmp config.make
 rm -rf qb_build

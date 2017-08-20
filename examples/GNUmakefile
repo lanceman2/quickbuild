@@ -9,7 +9,7 @@ subdirs :=\
  $(sort\
  $(filter-out BUILD_%,\
  $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile))\
- $(patsubst %/GNUmakefile.am,%,$(wildcard */GNUmakefile.am))\
+ $(patsubst %/bootstrap,%,$(wildcard */bootstrap))\
  )\
 )
 
@@ -28,31 +28,29 @@ test_dirs := $(strip\
 #test_dirs := $(test_dirs) $(patsubst %,BUILD_%,$(test_dirs))
 
 
-built_makefiles := $(sort\
- $(patsubst %/GNUmakefile.am,%/GNUmakefile,\
- $(wildcard */GNUmakefile.am)))
-
 installed := $(wildcard */installed)
 
-.PHONY: build clean cleaner distclean bootstrap repoclean install
+.PHONY: build clean cleaner distclean bootstrap repoclean test
 
 $(builddirs): bootstrap
 	$(MAKE) -C $(patsubst BUILD_%,%,$@) BUILD_PREFIX=../$@
 
 
-# We must build and run it in the BUILD_ directories before we
-# build them in the source directories.
-build install: $(builddirs)
+# We must build and install it in the BUILD_ directories before we
+# build and install them in the source directories.
+build: $(builddirs)
+	set -e
 	for d in $(builddirs) $(subdirs) ; do\
-	    if ! PREFIX=BUILD_$$d $(MAKE) -C $$d $@ ; then exit 1; fi;\
+	    PREFIX=$(PWD)/$$d/installed $(MAKE) -C $$d $@;\
+	    $(MAKE) -C $$d install $@;\
 	    done
 
 
-
 bootstrap:
+	set -e
 	for d in $(bootstrap_dirs) ; do\
 	    if [ -e "$$d/quickbuild.make" ] ; then continue; fi;\
-	    if !(cd $$d && ./bootstrap) ; then exit 1; fi;\
+	    cd $$d && ./bootstrap && cd - ;\
 	    done
 
 debug:
@@ -60,22 +58,12 @@ debug:
 	@echo "repoclean_dirs = $(repoclean_dirs)"
 
 
-repoclean:
-	for d in $(repoclean_dirs) ; do\
-	    if !(cd $$d && ./RepoClean) ; then exit 1; fi;\
-	    done
-clean: | repoclean
-
-
-install: build
-test: install
-
-test:
+test: build
 	err= ; fcount=0 ;\
 	for d in $(test_dirs) $(builddirs) ; do\
 	    echo -e "\n    ----- Running test in $$d -----\n";\
 	    if !(cd $$d && ./test) ; then\
-	    err="${err}\n test in $$d FAILED\n";\
+	    err="$${err}\n test in $$d FAILED\n";\
 	    echo -e "\n   test in $$d FAILED\n";\
 	    let fcount=$${fcount}+1; fi;\
 	    done;\
@@ -89,8 +77,8 @@ ifneq ($(strip $(installed)),)
 endif
 	for d in $(subdirs) ; do\
 	    $(MAKE) -C $$d cleaner ; done
-ifeq ($(bootstrap_dirs),)
-	rm -f $(built_makefiles)
-endif
-	for d in $(subdirs) ; do rm -rf $$d/installed ; done
+	for d in $(repoclean_dirs) ; do\
+          if !(cd $$d && ./RepoClean) ; then exit 1; fi;\
+          done
+
 

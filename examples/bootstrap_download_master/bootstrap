@@ -4,10 +4,6 @@ set -ex
 
 cd $(dirname ${BASH_SOURCE[0]})
 
-# We do not want make to be able to run until this
-# script is run:
-cp GNUmakefile.am GNUmakefile
-
 tag=master
 
 if [ -e quickbuild.make ] ; then
