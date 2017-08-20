@@ -70,6 +70,12 @@ make
 ```
 to build the code there.
 
+You cannot make a separate build tree for a source tree that you have
+already built the source in.  Trying to do so will cause GNU make to
+use built files that are in the source, and mix them will files built
+files in the build tree.  You may as well stir the code with a stick.
+
+
 ## GNUmakefile
 
 GNUmakefile is used as the file name of the make files because we use GNU
@@ -80,13 +86,26 @@ make make extensions and these make files will only work with GNU make.
 
 There are examples in the examples directory.  These examples also serve
 as a development test suite.  Each sub directory in examples is a complete
-package that uses quickbuild.  This is the best place to see how to use
-the quickbuild software package build system.  You can run 'make test' in
-the examples directory to build/test all the example packages.
+package that uses quickbuild, but needs the file quickbuild.make copied to
+it.  This is the best place to see how to use the quickbuild software
+package build system.  You can run 'make test' in the examples directory
+to build and test all the example packages.
+
+If you wish to make independent working package examples in the examples
+directory run
+```
+make quickbuild_copies
+```
+to copy the quickbuild.make file and complete all the example packages; or
+just copy quickbuild.make to the top of all the example package directory
+yourself.
+
+
+The top examples directory cannot be built in an alternate directory like
+the example projects (sub-directories) can.
 
 
 ## Development Notes
-
 
 We intend to keep the compressed (comments and blanks lines removed) copy
 of quickbuild.make by under 1000 lines.  2017 Aug 20 compressed line

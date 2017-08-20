@@ -1,1 +1,0 @@
-../../quickbuild.make
