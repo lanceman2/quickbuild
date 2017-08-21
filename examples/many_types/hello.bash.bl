@@ -1,0 +1,12 @@
+#!/bin/bash
+
+out=hello.bash
+
+cat << EOF > $out
+#!/bin/bash
+
+echo "hello"
+EOF
+
+chmod 755 $out
+

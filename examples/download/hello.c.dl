@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -ex
+
+tag=master
+url=https://raw.githubusercontent.com/lanceman2/quickbuild/$tag/examples/c_helloWorld/hello.c
+
+# TODO: You could add a sha512 sum check via sha512sum
+
+wget $url -O hello.c

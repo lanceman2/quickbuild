@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -ex
+
+
+
+./hello
+#./hello.bash # do not exist in build tree if not source tree
+./helloin.bash
+./helloin2.bash
+
+./installed/bin/hello
+./installed/bin/hello.bash
+./installed/bin/helloin.bash
+./installed/bin/helloin2.bash
+
+[ -f ./installed/bin/test.js ] || exit 1
+[ -f ./installed/bin/index.html ] || exit 1
+[ -f ./installed/bin/test2.js ] || exit 1
+[ -f ./installed/bin/test.css ] || exit 1
+

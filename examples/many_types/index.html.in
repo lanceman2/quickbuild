@@ -1,0 +1,11 @@
+<DOCTYPE html>
+<html lang=en>
+    <head>
+        <title>Hello</title>
+        <link rel="stylesheet" type="text/css" href="test.css"/>
+        <script src="test.js"></script>
+    </head>
+    <body>
+        <h1>Hi</h1>
+    </body>
+</html>

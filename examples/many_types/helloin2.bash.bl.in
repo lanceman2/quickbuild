@@ -1,0 +1,10 @@
+#!/bin/bash
+
+out=helloin2.bash
+
+cat << EOF > $out
+#!/bin/bash
+echo "hello  NODEJS_SHABANG=@NODEJS_SHABANG@"
+
+EOF
+chmod 755 $out

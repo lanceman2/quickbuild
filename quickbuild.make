@@ -194,19 +194,15 @@ endif
 ifneq ($(strip $(srcdir)),.)
 # Tell make where to find source files, because we are building
 # from a directory different than the source directory.
-VPATH := $(srcdir)
+VPATH := .:$(srcdir)
 #vpath %.cpp $(srcdir)
-#vpath %.c $(srcdir)
-#vpath %.h $(srcdir)
-#vpath %.hpp $(srcdir)
-#vpath %.jsp $(srcdir)
-#vpath %.cs $(srcdir)
-#vpath %.d $(srcdir)
 endif
 
 
-
+ifneq ($(strip $(patsubst clean%,foobar, $(MAKECMDGOALS))),foobar)
+#$(warning including config.make)
 -include $(top_builddir)/config.make
+endif
 
 -include $(top_srcdir)/package.make
 
@@ -331,20 +327,25 @@ endef
 
 # download (dl) scripts FILE.dl that download FILE
 # dl_scripts is the things downloaded
-dl_scripts := $(patsubst %.dl,%,$(wildcard *.dl))
+dl_scripts := $(patsubst $(srcdir)/%.dl,%,$(wildcard $(srcdir)/*.dl))
 $(foreach targ,$(dl_scripts),$(eval $(call Dependify,$(targ),dl)))
 
 # In files, FILE.in, that build files named FILE
 # in_files is the things built
-in_files := $(patsubst %.in,%,$(wildcard *.in))
+in_files := $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in))
 $(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(top_builddir)/config.make)))
+
+# *.bl.in
+bl_in_scripts := $(sort\
+ $(patsubst $(srcdir)/%.bl.in,%,$(wildcard $(srcdir)/*.bl.in))\
+)
+$(foreach targ,$(bl_in_scripts),$(eval $(call Dependify,$(targ),bl)))
 
 # build (bl) scripts FILE.bl that build files named FILE
 # bl_scripts is the files built
-bl_scripts := $(sort\
- $(patsubst %.bl,%,$(wildcard *.bl))\
- $(patsubst %.bl.in,%,$(wildcard *.bl.in))\
-)
+bl_scripts := $(sort\ $(filter-out $(bl_in_scripts),\
+ $(patsubst $(srcdir)/%.bl,%,$(wildcard $(srcdir)/*.bl))\
+))
 $(foreach targ,$(bl_scripts),$(eval $(call Dependify,$(targ),bl)))
 
 undefine Dependify
@@ -454,54 +455,69 @@ undefine c_srcfiles
 undefine c_compile
 undefine cpp_compile
 
-
-
-installed := $(sort $(filter-out $(BUILD_NO_INSTALL),\
+# files that are built and unless listed in
+# $(BUILD_NO_INSTALL) are installed too.
+common_built := $(strip\
+\
+ $(patsubst $(srcdir)/%.jsp,%.js,$(wildcard $(srcdir)/*.jsp))\
+ $(patsubst $(srcdir)/%.cs,%.css,$(wildcard $(srcdir)/*.cs))\
+\
+ $(patsubst $(srcdir)/%.jsp.in,%.js,$(wildcard $(srcdir)/*.jsp.in))\
+ $(patsubst $(srcdir)/%.cs.in,%.css,$(wildcard $(srcdir)/*.cs.in))\
+\
+ $(patsubst $(srcdir)/%.jsp.bl.in,%.js,$(wildcard $(srcdir)/*.jsp.bl.in))\
+ $(patsubst $(srcdir)/%.cs.bl.in,%.css,$(wildcard $(srcdir)/*.cs.bl.in))\
+\
+ $(patsubst $(srcdir)/%.js.bl,%.js,$(wildcard $(srcdir)/*.js.bl))\
+ $(patsubst $(srcdir)/%.css.bl,%.css,$(wildcard $(srcdir)/*.css.bl))\
+\
+ $(patsubst $(srcdir)/%.js.in,%.js,$(wildcard $(srcdir)/*.js.in))\
+ $(patsubst $(srcdir)/%.css.in,%.css,$(wildcard $(srcdir)/*.css.in))\
+\
+ $(patsubst $(srcdir)/%.js.bl.in,%.js,$(wildcard $(srcdir)/*.js.bl.in))\
+ $(patsubst $(srcdir)/%.css.bl.in,%.css,$(wildcard $(srcdir)/*.css.bl.in))\
+\
+ $(patsubst $(srcdir)/%.jsp.bl,%.js,$(wildcard $(srcdir)/*.jsp.bl))\
+ $(patsubst $(srcdir)/%.cs.bl,%.css,$(wildcard $(srcdir)/*.cs.bl))\
+\
+ $(patsubst $(srcdir)/%.js.bl,%.js,$(wildcard $(srcdir)/*.js.dl))\
+ $(patsubst $(srcdir)/%.css.bl,%.css,$(wildcard $(srcdir)/*.css.dl))\
+\
+ $(patsubst $(srcdir)/%.html.in,%.html,$(wildcard $(srcdir)/*.html.in))\
+ $(patsubst $(srcdir)/%.html.bl,%.html,$(wildcard $(srcdir)/*.html.bl))\
+ $(patsubst $(srcdir)/%.html.bl.in,%.html,$(wildcard $(srcdir)/*.html.bl.in))\
+\
  $(bins)\
  $(libs)\
  $(BUILD)\
-\
- $(patsubst %.jsp,%.js,$(wildcard *.jsp))\
- $(patsubst %.cs,%.css,$(wildcard *.cs))\
-\
- $(patsubst %.jsp.bl,%.js,$(wildcard *.jsp.bl))\
- $(patsubst %.cs.bl,%.css,$(wildcard *.cs.bl))\
-\
- $(patsubst %.jsp.in,%.js,$(wildcard *.jsp.in))\
- $(patsubst %.cs.in,%.css,$(wildcard *.cs.in))\
-\
- $(patsubst %.jsp.bl.in,%.js,$(wildcard *.jsp.bl.in))\
- $(patsubst %.cs.bl.in,%.css,$(wildcard *.cs.bl.in))\
-\
- $(patsubst %.js.bl,%.js,$(wildcard *.js.bl))\
- $(patsubst %.css.bl,%.css,$(wildcard *.css.bl))\
-\
- $(patsubst %.js.in,%.js,$(wildcard *.js.in))\
- $(patsubst %.css.in,%.css,$(wildcard *.css.in))\
-\
- $(patsubst %.js.bl.in,%.js,$(wildcard *.js.bl.in))\
- $(patsubst %.css.bl.in,%.css,$(wildcard *.css.bl.in))\
-\
- $(patsubst %.html.in,%.html,$(wildcard *.html.in))\
- $(patsubst %.html.bl,%.html,$(wildcard *.html.bl))\
- $(patsubst %.html.bl.in,%.html,$(wildcard *.html.bl.in))\
+)
+
+
+installed := $(sort $(filter-out $(BUILD_NO_INSTALL),\
+ $(common_built)\
  $(wildcard *.js *.css *.html *.gif *.jpg *.png)\
  $(INSTALLED)\
 ))
-
 
 # We tally up all the files that are built including all possible
 # intermediate files, and exclude $(dependfiles) $(objects) which are
 # handled in qb_build/
 built := $(sort\
- $(bins)\
- $(libs)\
- $(BUILD)\
- $(patsubst %.jsp,%.js,$(wildcard *.jsp))\
- $(patsubst %.cs,%.css,$(wildcard *.cs))\
+ $(common_built)\
  $(bl_scripts)\
+ $(bl_in_scripts)\
  $(in_files)\
 )
+
+
+installed_src := $(sort $(filter-out $(built), $(installed)))
+
+installed_built := $(sort $(filter-out $(installed_src), $(installed)))
+
+installed_src := $(sort $(patsubst %,$(srcdir)/%,$(installed_src)))
+
+installed := $(sort $(installed_built) $(installed_src))
+
 
 cleanfiles := $(sort $(built) $(CLEANFILES))
 
@@ -520,8 +536,6 @@ ifneq ($(strip $(objects)),)
 $(dependfiles) $(objects): | qb_build
 qb_build:
 	mkdir qb_build
-
-
 
 # Rules to build C/C++ programs
 
@@ -579,7 +593,13 @@ debug:
 	@echo "built=$(built)"
 	@echo "downloaded=$(downloaded)"
 	@echo "installed=$(installed)"
+	@echo "installed_built=$(installed_built)"
+	@echo "installed_src=$(installed_src)"
 	@echo "dependfiles=$(dependfiles)"
+	@echo "srcdir=$(srcdir)"
+	@echo "top_srcdir=$(top_srcdir)"
+	@echo "top_builddir=$(top_builddir)"
+
 
 help:
 	@echo -e "  $(MAKE) [TARGET]\n"
@@ -587,14 +607,21 @@ help:
 	@echo -e '$(foreach \
 	    var,build install download clean distclean,\n   $(var))' 
 
-# some suffix recipes
+
+# some recipes not based on suffix
 
 # download script to targets
 # *.dl -> *
 $(dl_scripts):
-	./$@.dl || (rm -rf $@ ; exit 1)
+	$(srcdir)/$@.dl || (rm -rf $@ ; exit 1)
 
+# *.bl -> *
 $(bl_scripts):
+	$(srcdir)/$@.bl || (rm -rf $@ ; exit 1)
+
+# *.bl -> * that have *.bl.in files in the source
+# so the *.bl file will be in the build tree.
+$(bl_in_scripts):
 	./$@.bl || (rm -rf $@ ; exit 1)
 
 # It's very important to say: "This is a generated file" in the upper
@@ -602,18 +629,21 @@ $(bl_scripts):
 # below.
 # *.in -> *
 $(in_files):
-	if head -1 $@.in | grep -E '^#!' ; then\
-	     sed -n '1,1p' $@.in | sed $(sed_commands) > $@ &&\
-	     echo -e "// This is a generated file\n" >> $@ &&\
-	     sed '1,1d' $@.in | sed $(sed_commands) >> $@ ;\
+	if head -1 $< | grep -E '^#!' ; then\
+	     sed -n '1,1p' $< | sed $(sed_commands) > $@ &&\
+	     echo -e "# This is a generated file\n" >> $@ &&\
+	     sed '1,1d' $< | sed $(sed_commands) >> $@ ;\
 	   elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$ ]] ; then\
 	     echo -e "/* This is a generated file */\n" > $@ &&\
-	     sed $@.in $(sed_commands) >> $@ ;\
+	     sed $< $(sed_commands) >> $@ ;\
 	   else\
-	     sed $@.in $(sed_commands) > $@ ;\
+	     sed $< $(sed_commands) > $@ ;\
 	   fi
 	if [[ $@ == *.bl ]] ; then chmod 755 $@ ; fi
 	if [ -n "$($@_MODE)" ] ; then chmod $($@_MODE) $@ ; fi
+
+
+# some suffix rules the find source from VPATH
 
 # *.jsp -> *.js
 %.js: %.jsp
