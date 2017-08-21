@@ -90,9 +90,11 @@ test: build
             fi ;\
           fi ;\
           cd .. ;\
-          done ;\
-          if [ -n "$$err" ] ; then echo -e "\n\n  $${fcount}/$${tcount} test(s) failed\n$${err}\n"; exit 1; fi;\
-          echo -e "\n\n   All $${tcount}/$${tcount} tests Succeeded\n"
+        done ;\
+        if [ -n "$$err" ] ; then\
+          echo -e "\n\n  $${fcount}/$${tcount} test(s) failed\n$${err}\n";\
+          exit 1; fi;\
+        echo -e "\n\n   All $${tcount}/$${tcount} tests Succeeded\n"
 
 
 clean cleaner distclean:
