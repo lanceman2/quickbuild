@@ -478,8 +478,8 @@ common_built := $(strip\
  $(patsubst $(srcdir)/%.jsp.bl,%.js,$(wildcard $(srcdir)/*.jsp.bl))\
  $(patsubst $(srcdir)/%.cs.bl,%.css,$(wildcard $(srcdir)/*.cs.bl))\
 \
- $(patsubst $(srcdir)/%.js.bl,%.js,$(wildcard $(srcdir)/*.js.dl))\
- $(patsubst $(srcdir)/%.css.bl,%.css,$(wildcard $(srcdir)/*.css.dl))\
+ $(patsubst $(srcdir)/%.js.dl,%.js,$(wildcard $(srcdir)/*.js.dl))\
+ $(patsubst $(srcdir)/%.css.dl,%.css,$(wildcard $(srcdir)/*.css.dl))\
 \
  $(patsubst $(srcdir)/%.html.in,%.html,$(wildcard $(srcdir)/*.html.in))\
  $(patsubst $(srcdir)/%.html.bl,%.html,$(wildcard $(srcdir)/*.html.bl))\
