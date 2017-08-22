@@ -579,7 +579,6 @@ nodepend := $(strip\
 ifeq ($(nodepend),)
 # We do not want to include depend files for target "download"
 ifneq ($(strip $(MAKECMDGOALS)),download)
-$(error MAKECMDGOALS=$(MAKECMDGOALS))
 # include with no error if we need to build them
 -include $(dependfiles)
 endif
