@@ -1,14 +1,16 @@
 # This is a GNU make file that uses GNU make extensions.
 
-# This is free software via the free software foundation AGPL license.
+# This file is from the quickbuild software package
+# https://github.com/lanceman2/quickbuild/
 #
-# This file is part of the quickbuild software package
-# https://github.com/lanceman2/quickbuild
+# quickbuild is free software that is distributed under the free software
+# foundation's GNU Affero General Public License (AGPL) version 3.
 #
-# A software build system based on GNU make.
+# quickbuild is a software build system based on GNU make.
 # A software build system for web apps with served public static files and
 # installed executables.
-# Has build rules based on file suffixes.
+# Has build rules based on file suffixes.  It's just a short (<1000 lines)
+# make file that you include in your make files.
 #
 #
 ##########################################################################
