@@ -1,8 +1,10 @@
 # This is a GNU make file that uses GNU make extensions.
 
+# This is free software via the free software foundation AGPL license.
+#
 # This file is part of the quickbuild software package
 # https://github.com/lanceman2/quickbuild
-
+#
 # A software build system based on GNU make.
 # A software build system for web apps with served public static files and
 # installed executables.
@@ -10,7 +12,7 @@
 #
 #
 ##########################################################################
-# Compressing this file:
+# Compressing this file (removing comments and extra lines):
 #
 # Run:
 #
@@ -125,6 +127,8 @@ else # ifdef BUILD_PREFIX
 #########################################################################
 
 
+.DEFAULT_GOAL := build
+
 
 ifndef subdirs
 subdirs := $(sort $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)))
@@ -132,9 +136,11 @@ endif
 
 ifneq ($(subdirs),)
 
-ifdef SUBDIRS # user interface so they may reorder the directories
+ifdef SUBDIRS # user interface to reorder the sub-directories
 subdirs := $(SUBDIRS)
 endif
+
+#$(error subdirs=$(subdirs))
 
 #########################################################################
 #                  recursion
@@ -292,8 +298,6 @@ CXXFLAGS ?= -g -Wall
 #
 ##############################################################
 
-
-.DEFAULT_GOAL := build
 
 
 
@@ -501,12 +505,12 @@ installed := $(sort $(filter-out $(BUILD_NO_INSTALL),\
 # We tally up all the files that are built including all possible
 # intermediate files, and exclude $(dependfiles) $(objects) which are
 # handled in qb_build/
-built := $(sort\
+built := $(sort $(filter-out $(downloaded),\
  $(common_built)\
  $(bl_scripts)\
  $(bl_in_scripts)\
  $(in_files)\
-)
+))
 
 
 installed_src := $(sort $(filter-out $(built), $(installed)))
@@ -632,15 +636,17 @@ $(bl_in_scripts):
 # *.in -> *
 $(in_files):
 	if head -1 $< | grep -E '^#!' ; then\
-	     sed -n '1,1p' $< | sed $(sed_commands) > $@ &&\
-	     echo -e "# This is a generated file\n" >> $@ &&\
-	     sed '1,1d' $< | sed $(sed_commands) >> $@ ;\
-	   elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$ ]] ; then\
-	     echo -e "/* This is a generated file */\n" > $@ &&\
-	     sed $< $(sed_commands) >> $@ ;\
-	   else\
-	     sed $< $(sed_commands) > $@ ;\
-	   fi
+	  sed -n '1,1p' $< | sed $(sed_commands) > $@ &&\
+          if [ -n "$($@_GEN_COMMENT)" ] ; then\
+            echo -e "$($@_GEN_COMMENT)"  >> $@ ;\
+          else\
+	    echo -e "# This is a generated file\n" >> $@ ; fi ;\
+	  sed '1,1d' $< | sed $(sed_commands) >> $@ ;\
+	elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$ ]] ; then\
+	  echo -e "/* This is a generated file */\n" > $@ &&\
+	  sed $< $(sed_commands) >> $@ ;\
+	else\
+	  sed $< $(sed_commands) > $@ ; fi
 	if [[ $@ == *.bl ]] ; then chmod 755 $@ ; fi
 	if [ -n "$($@_MODE)" ] ; then chmod $($@_MODE) $@ ; fi
 
