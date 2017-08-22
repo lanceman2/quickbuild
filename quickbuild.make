@@ -453,7 +453,7 @@ undefine c_srcfiles
 undefine c_compile
 undefine cpp_compile
 
-# files that are built and unless listed in
+# files that are built via BUILD and unless listed in
 # $(BUILD_NO_INSTALL) are installed too.
 common_built := $(strip\
 \
@@ -488,6 +488,7 @@ common_built := $(strip\
  $(bins)\
  $(libs)\
  $(BUILD)\
+ $(BUILD_NO_INSTALL)\
 )
 
 
