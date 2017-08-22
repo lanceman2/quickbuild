@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -ex
+
+./hello
+./installed/bin/hello
+./hello2
+# hello2 should not be installed
+if [ -e installed/bin/hello2 ] ; then
+    exit 1
+fi

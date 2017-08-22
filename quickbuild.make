@@ -379,7 +379,6 @@ define Mkdepend
  id := $(words $(counter))
  name := $$(patsubst %.so,%_so,qb_build/$$(notdir $(2)-$$(id)-$(1)))
  counter := $$(counter) x
- $$(name).d $$(name).o: $(2).$(3) # rule below
  $$(name).d_target := $$(name).$(4)
  $$(name).$(4)_compile := $$($(3)_compile)
  $$(name).d_compile := $$($(3)_compile)
@@ -402,8 +401,7 @@ define Mkcpprules
   # $(2) = object suffix o or lo
   # $(3) = nothing or -shared
   counter := x
-  # list os object files for this program
-  objects :=
+  # list object files for this program is $(1)_objects
   cpp_srcfiles :=  $$(patsubst %.cpp,%,$$(filter %.cpp,$$($(1)_SOURCES)))
   ifneq ($$(strip $$(cpp_srcfiles)),)
     $(1)_compile := $(CXX)
@@ -533,9 +531,13 @@ cleandirs := $(CLEANDIRS)
 ifneq ($(strip $(objects)),)
   cleandirs := $(sort $(cleandirs) qb_build)
 
-$(dependfiles) $(objects): | qb_build
-qb_build:
+# We cannot use a directory as a dependency since it's modification date
+# changed as files in it change, so we use a touch file in the
+# directory.
+$(dependfiles) $(objects): qb_build/depend.touch
+qb_build/depend.touch:
 	mkdir qb_build
+	touch $@
 
 # Rules to build C/C++ programs
 
@@ -568,10 +570,8 @@ nodepend := $(strip\
 )
 
 ifeq ($(nodepend),)
-ifneq ($(strip $(wildcard $(dependfiles))),)
 # include with no error if we need to build them
 -include $(dependfiles)
-endif
 endif
 
 undefine nodepend
@@ -582,11 +582,12 @@ endif # ifneq ($(strip $(objects)),)
 # default target
 build: $(downloaded) $(built) $(top_builddir)/config.make
 # download before building
-$(built): | $(downloaded) $(dependfiles)
+$(built): | $(downloaded)
 
 
 # run 'make debug' to just spew this stuff:
 debug:
+	@echo "objects=$(objects)"
 	@echo "cleanerfiles=$(cleanerfiles)"
 	@echo "cleanfiles=$(cleanfiles)"
 	@echo "INSTALL_DIR=$(INSTALL_DIR)"
