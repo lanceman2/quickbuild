@@ -4,23 +4,39 @@ set -ex
 
 cd $(dirname ${BASH_SOURCE[0]})
 
-tag=master
-
-if [ -e quickbuild.make ] ; then
+if [ -z "$*" ] && [ -e quickbuild.make ] ; then
     set +x
-    echo "quickbuild.make exists"
-    echo "If you wish to regenerate it remove it first"
+    cat <<EOF
+
+  The file quickbuild.make exists.
+  If you wish to regenerate it remove it first.
+  Or run
+
+      $0 -f
+
+EOF
     exit 1
 fi
 
+
+tag=master
+url=https://raw.githubusercontent.com/lanceman2/quickbuild/$tag/quickbuild.make
+
 set +e
-echo "# This is a downloaded/generated file" > quickbuild.make.tmp
+cat <<EOF > quickbuild.make.tmp
+# This is a generated file
+#
+#  You can get the uncompressed original version of this file from:
+#
+#      $url
+#
+
+EOF
 set -e
 
+
 # get and compress the quickbuild.make file
-wget\
- https://raw.githubusercontent.com/lanceman2/quickbuild/$tag/quickbuild.make\
- -O - |\
+wget $url -O - |\
  sed -e 's/^\s*\#.*$//g' -e '/^$/d' >> quickbuild.make.tmp
 
 mv quickbuild.make.tmp quickbuild.make
