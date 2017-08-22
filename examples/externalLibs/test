@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -ex
+
+./x11_hello
+./installed/bin/x11_hello

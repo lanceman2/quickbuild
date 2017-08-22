@@ -91,6 +91,10 @@ it.  This is the best place to see how to use the quickbuild software
 package build system.  You can run 'make test' in the examples directory
 to build and test all the example packages.
 
+Each examples directory contains a script file names test, which is
+particular to this test suite and is not part of the example package.
+The examples do not need this, test, file to be working package examples.
+
 If you wish to make independent working package examples in the examples
 directory run
 ```
@@ -101,8 +105,8 @@ just copy quickbuild.make to the top of all the example package directory
 yourself.
 
 
-The top examples directory cannot be built in an alternate directory like
-the example projects (sub-directories) can.
+The top examples directory cannot be built in an alternate build directory
+like the example projects (sub-directories) can.
 
 
 ## Development Notes
