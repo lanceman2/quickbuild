@@ -69,7 +69,7 @@ SHELL = /bin/bash
 ifdef top_srcdir
 # this is a build tree copy
 ifdef BUILD_PREFIX
-$(error You cannot make a build tree with a build tree that is not a source tree)
+$(error You cannot make a build tree with a directory that is not a source tree)
 endif
 
 # Make sure that the source tree that we are using has not been built yet.
