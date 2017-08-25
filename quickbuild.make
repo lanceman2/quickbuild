@@ -155,7 +155,6 @@ endif
 build: rec_build
 install: rec_install
 download: rec_download
-config: rec_config
 debug: rec_debug
 clean: rec_clean
 cleaner: rec_cleaner
@@ -181,22 +180,29 @@ else # ifneq ($(subdirs),)
 # this file is in the top build directory.
 top_builddir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
 
-ifndef top_srcdir
 
+ifeq ($(top_builddir),.)
+configmakefile := config.make
+else
+configmakefile := $(top_builddir)/config.make
+endif
+
+
+ifndef top_srcdir
 # We are building in the source tree
 top_srcdir := $(top_builddir)
 srcdir := .
 else
-# We are not building in the source tree
+# We are NOT building in the source tree
 # We should have both top_srcdir and srcdir be full path
-ifneq ($(top_builddir),.)
+ifeq ($(top_builddir),.)
+# We are in the top build directory
+srcdir := $(top_srcdir)
+else
 srcdir := $(patsubst $(abspath $(top_builddir))/%, $(abspath $(top_srcdir))/%,\
  $(abspath $(dir $(firstword $(MAKEFILE_LIST)))))
-else
-srcdir := $(top_srcdir)
 endif
-
-endif
+endif # ifndef top_srcdir
 
 
 ifneq ($(strip $(srcdir)),.)
@@ -207,9 +213,11 @@ VPATH := .:$(srcdir)
 endif
 
 
+
+
 ifneq ($(strip $(patsubst clean%,foobar, $(MAKECMDGOALS))),foobar)
 #$(warning including config.make)
--include $(top_builddir)/config.make
+-include $(configmakefile)
 endif
 
 -include $(top_srcdir)/package.make
@@ -339,7 +347,7 @@ $(foreach targ,$(dl_scripts),$(eval $(call Dependify,$(targ),dl)))
 # In files, FILE.in, that build files named FILE
 # in_files is the things built
 in_files := $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in))
-$(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(top_builddir)/config.make)))
+$(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(configmakefile))))
 
 # *.bl.in
 bl_in_scripts := $(sort\
@@ -529,7 +537,7 @@ cleanfiles := $(sort $(built) $(CLEANFILES))
 cleanerfiles := $(sort $(CLEANERFILES) $(wildcard *.pyc))
 
 ifeq ($(strip $(top_builddir)),.)
-    cleanerfiles := $(cleanerfiles) config.make
+    cleanerfiles := $(cleanerfiles) $(configmakefile)
 endif
 
 
@@ -581,6 +589,7 @@ ifeq ($(nodepend),)
 ifneq ($(strip $(MAKECMDGOALS)),download)
 # include with no error if we need to build them
 -include $(dependfiles)
+
 endif
 endif
 
@@ -591,13 +600,14 @@ endif # ifneq ($(strip $(objects)),)
 
 
 # default target
-build: $(downloaded) $(built) $(top_builddir)/config.make
+build: $(downloaded) $(built) $(configmakefile)
 # download before building
 $(built): | $(downloaded)
 
 
 # run 'make debug' to just spew this stuff:
 debug:
+	@echo "configmakefile=$(configmakefile)"
 	@echo "objects=$(objects)"
 	@echo "cleanerfiles=$(cleanerfiles)"
 	@echo "cleanfiles=$(cleanfiles)"
@@ -687,13 +697,24 @@ endif
 endif
 
 
+ifneq ($(strip $(dependfiles)),)
+$(dependfiles): $(configmakefile)
+endif
 
-config: $(top_builddir)/config.make
-
-$(top_builddir)/config.make:
+ifeq ($(top_builddir),.)
+config: config.make
+config.make:
 	echo -e "# This is a generated file\n" > $@
 	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
+else
+config: $(configmakefile)
+# Use make in the top build directory and not do recursion
+# so subdirs is set to nothing.
+$(configmakefile):
+	$(MAKE) -C $(top_builddir) subdirs= config.make
+endif
+
 
 download: $(downloaded)
 
