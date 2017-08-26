@@ -703,7 +703,7 @@ endif
 
 ifeq ($(top_builddir),.)
 config:
-	@echo "forcing a remaking of config.make"
+	@echo -e "\nForcing a remaking of config.make\n"
 	rm -f config.make
 	$(MAKE) config.make
 config.make:
