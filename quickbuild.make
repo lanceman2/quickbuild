@@ -398,7 +398,7 @@ define Mkdepend
  $$(name).d_compile := $$($(3)_compile)
  $$(name).d $$(name).$(4): $(2).$(3)
  dependfiles := $(dependfiles) $$(name).d
- $(1)_objects := $$($(1)_objects) $$(name).$(4)
+ $(1)_objects := $$(strip $$($(1)_objects) $$(name).$(4))
  common_cflags := $(CPPFLAGS) $$($$(name).$(4)_CPPFLAGS) $$($(1)_CPPFLAGS)
  ifeq ($(3),c)
    $$(name).$(4)_cflags := $$(strip $(CFLAGS) $$(common_cflags) $$($(1)_CFLAGS) $$($$(name).$(4)_CFLAGS))
@@ -561,7 +561,7 @@ qb_build/%.o:
 	$($@_compile) $($@_cflags) -c $< -o $@
 # How to build library shared object files
 qb_build/%.lo:
-	$($@_compile) $($@_cflags) -fPIC $(CFLAGS) -c $< -o $@
+	$($@_compile) $($@_cflags) -fPIC -c $< -o $@
 
 
 # How to build depend files that track dependencies so that the objects
