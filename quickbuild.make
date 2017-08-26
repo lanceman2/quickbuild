@@ -702,13 +702,15 @@ $(dependfiles): $(configmakefile)
 endif
 
 ifeq ($(top_builddir),.)
-config: config.make
+config:
+	@echo "forcing a remaking of config.make"
+	rm -f config.make
+	$(MAKE) config.make
 config.make:
 	echo -e "# This is a generated file\n" > $@
 	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
 else
-config: $(configmakefile)
 # Use make in the top build directory and not do recursion
 # so subdirs is set to nothing.
 $(configmakefile):
