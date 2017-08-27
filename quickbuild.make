@@ -311,14 +311,17 @@ CXXFLAGS ?= -g -Wall
 
 
 
-config_vars :=\
+config_vars := $(strip\
  PREFIX\
  JS_COMPRESS\
  CSS_COMPRESS\
  NODEJS_SHABANG\
  CFLAGS\
  CXXFLAGS\
- TOP_BUILDDIR
+ CPPFLAGS\
+ TOP_BUILDDIR\
+ $(CONFIG_VARS)\
+)
 
 # Strings we replace all *.in files.  For example: we replace
 # @SERVER_PORT@ with the value of $(SERVER_PORT) in "foo.in" to make
