@@ -312,7 +312,7 @@ CXXFLAGS ?= -g -Wall
 
 
 
-config_vars := $(strip\
+config_vars := $(sort\
  PREFIX\
  JS_COMPRESS\
  CSS_COMPRESS\
@@ -327,7 +327,7 @@ config_vars := $(strip\
 # Strings we replace all *.in files.  For example: we replace
 # @SERVER_PORT@ with the value of $(SERVER_PORT) in "foo.in" to make
 # file "foo".
-seds := $(strip\
+seds := $(sort\
  NODEJS_SHABANG\
  $(CONFIG_VARS)\
 )
@@ -352,7 +352,10 @@ $(foreach targ,$(dl_scripts),$(eval $(call Dependify,$(targ),dl)))
 
 # In files, FILE.in, that build files named FILE
 # in_files is the things built
-in_files := $(strip $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in)))
+in_files := $(sort\
+ $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in))\
+ $(patsubst $(srcdir)/%.in.dl,%,$(wildcard $(srcdir)/*.in.dl))\
+)
 $(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(configmakefile))))
 
 # *.bl.in
@@ -476,7 +479,7 @@ undefine cpp_compile
 
 # files that are built via BUILD and unless listed in
 # $(BUILD_NO_INSTALL) are installed too.
-common_built := $(strip\
+common_built := $(sort\
 \
  $(patsubst $(srcdir)/%.jsp,%.js,$(wildcard $(srcdir)/*.jsp))\
  $(patsubst $(srcdir)/%.cs,%.css,$(wildcard $(srcdir)/*.cs))\
@@ -683,7 +686,7 @@ $(in_files):
           else\
 	    echo -e "# This is a generated file\n" >> $@ ; fi ;\
 	  sed '1,1d' $< | sed $(sed_commands) >> $@ ;\
-	elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$ ]] ; then\
+	elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$|\.h$$|.c$$|\.hpp$$|.cpp$$ ]] ; then\
 	  echo -e "/* This is a generated file */\n" > $@ &&\
 	  sed $< $(sed_commands) >> $@ ;\
 	else\
