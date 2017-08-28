@@ -326,8 +326,10 @@ config_vars := $(strip\
 # Strings we replace all *.in files.  For example: we replace
 # @SERVER_PORT@ with the value of $(SERVER_PORT) in "foo.in" to make
 # file "foo".
-seds :=\
- NODEJS_SHABANG
+seds := $(strip\
+ NODEJS_SHABANG\
+ $(CONFIG_VARS)\
+)
 
 sed_commands :=
 define Seds
