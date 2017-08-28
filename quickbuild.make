@@ -195,6 +195,8 @@ srcdir := .
 else
 # We are NOT building in the source tree
 # We should have both top_srcdir and srcdir be full path
+
+
 ifeq ($(top_builddir),.)
 # We are in the top build directory
 srcdir := $(top_srcdir)
@@ -209,10 +211,9 @@ ifneq ($(strip $(srcdir)),.)
 # Tell make where to find source files, because we are building
 # from a directory different than the source directory.
 VPATH := .:$(srcdir)
-#vpath %.cpp $(srcdir)
+# and where to find header source files:
+CPPFLAGS := $(strip -I. -I$(srcdir) $(CPPFLAGS))
 endif
-
-
 
 
 ifneq ($(strip $(patsubst clean%,foobar, $(MAKECMDGOALS))),foobar)
@@ -351,7 +352,7 @@ $(foreach targ,$(dl_scripts),$(eval $(call Dependify,$(targ),dl)))
 
 # In files, FILE.in, that build files named FILE
 # in_files is the things built
-in_files := $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in))
+in_files := $(strip $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in)))
 $(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(configmakefile))))
 
 # *.bl.in
@@ -387,6 +388,7 @@ id :=
 objects :=
 c_compile := $(CC)
 cpp_compile := $(CXX)
+
 
 # GNU make function to make dependency (*.d) files and object (*.o, *.lo) files.
 define Mkdepend
@@ -528,6 +530,23 @@ built := $(sort $(filter-out $(downloaded),\
 ))
 
 
+ifneq ($(in_files),)
+built_dep := $(sort $(dependfiles) $(filter-out $(in_files), $(built)))
+ifneq ($(built_dep),)
+# TODO: It would be better to find dependencies
+# but that's not so easy with *.c *.cpp files,
+# so a blanket dependency on *.in files may keep
+# building in the correct order.
+$(warning built_dep=$(built_dep) :  in_files = $(in_files))
+$(built_dep): $(in_files)
+endif
+undefine built_dep
+endif
+
+
+
+
+
 installed_src := $(sort $(filter-out $(built), $(installed)))
 
 installed_built := $(sort $(filter-out $(installed_src), $(installed)))
@@ -550,6 +569,7 @@ cleandirs := $(CLEANDIRS)
 
 ifneq ($(strip $(objects)),)
   cleandirs := $(sort $(cleandirs) qb_build)
+
 
 # We cannot use a directory as a dependency since it's modification date
 # changed as files in it change, so we use a touch file in the

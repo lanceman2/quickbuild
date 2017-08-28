@@ -1,3 +1,6 @@
+
+test24_SOURCES := test24.c
+
 hello_SOURCES := hello.c
 
 INSTALL_DIR = $(PREFIX)/bin
