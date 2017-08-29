@@ -366,7 +366,7 @@ $(foreach targ,$(bl_in_scripts),$(eval $(call Dependify,$(targ),bl)))
 
 # build (bl) scripts FILE.bl that build files named FILE
 # bl_scripts is the files built
-bl_scripts := $(sort\ $(filter-out $(bl_in_scripts),\
+bl_scripts := $(sort $(filter-out $(bl_in_scripts),\
  $(patsubst $(srcdir)/%.bl,%,$(wildcard $(srcdir)/*.bl))\
 ))
 $(foreach targ,$(bl_scripts),$(eval $(call Dependify,$(targ),bl)))
@@ -736,7 +736,7 @@ config:
 	$(MAKE) config.make
 config.make:
 	echo -e "# This is a generated file\n" > $@
-	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
+	echo -e "$(foreach var,$(config_vars),\n$(var) ?= $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
 else
 # Use make in the top build directory and not do recursion
