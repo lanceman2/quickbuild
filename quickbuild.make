@@ -311,7 +311,7 @@ CXXFLAGS ?= -g -Wall
 
 
 
-
+# list of make variables that get written to config.make
 config_vars := $(sort\
  PREFIX\
  JS_COMPRESS\
@@ -329,7 +329,7 @@ config_vars := $(sort\
 # file "foo".
 seds := $(sort\
  NODEJS_SHABANG\
- $(CONFIG_VARS)\
+ $(IN_VARS)\
 )
 
 sed_commands :=
