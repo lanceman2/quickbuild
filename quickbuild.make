@@ -159,14 +159,13 @@ endif
 build: rec_build
 install: rec_install
 download: rec_download
-debug: rec_debug
 clean: rec_clean
 cleaner: rec_cleaner
 distclean: rec_distclean
 
 rec_build rec_clean rec_cleaner\
  rec_distclean rec_install rec_download\
- rec_config rec_debug:
+ rec_config:
 	set -e
 	for d in $(subdirs) ; do\
           $(MAKE) -C $$d $(patsubst rec_%,%,$(@)); done
