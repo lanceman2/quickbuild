@@ -45,6 +45,10 @@
 #
 ##########################################################################
 
+
+######## This make file is tricky as hell.
+
+
 SHELL = /bin/bash
 
 # .ONESHELL = all the lines in the recipe be passed to a single invocation
@@ -95,8 +99,8 @@ $(error BUILD_PREFIX makefile $(BUILD_PREFIX)/GNUmakefile exists already)
 endif
 
 this_file := $(notdir $(lastword $(MAKEFILE_LIST)))
-top_srcdir := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
-abs_top_srcdir := $(abspath $(top_srcdir))
+top_srcdir = $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+abs_top_srcdir = $(abspath $(top_srcdir))
 
 # build_prefix is the only target in this case: just running a bash script
 # that creates a build directory that mirrors the source tree.
@@ -190,8 +194,8 @@ endif
 
 ifndef top_srcdir
 # We are building in the source tree
-top_srcdir := $(top_builddir)
-srcdir := .
+top_srcdir = $(top_builddir)
+srcdir = .
 else
 # We are NOT building in the source tree
 # We should have both top_srcdir and srcdir be full path
@@ -199,9 +203,9 @@ else
 
 ifeq ($(top_builddir),.)
 # We are in the top build directory
-srcdir := $(top_srcdir)
+srcdir = $(top_srcdir)
 else
-srcdir := $(patsubst $(abspath $(top_builddir))/%, $(abspath $(top_srcdir))/%,\
+srcdir = $(patsubst $(abspath $(top_builddir))/%, $(abspath $(top_srcdir))/%,\
  $(abspath $(dir $(firstword $(MAKEFILE_LIST)))))
 endif
 endif # ifndef top_srcdir
@@ -554,7 +558,7 @@ installed_src := $(sort $(filter-out $(built), $(installed)))
 
 installed_built := $(sort $(filter-out $(installed_src), $(installed)))
 
-installed_src := $(sort $(patsubst %,$(srcdir)/%,$(installed_src) $(INSTALLED_SRC)))
+installed_src := $(sort $(patsubst %,$(srcdir)/%,$(patsubst $(srcdir)/%,%,$(installed_src) $(INSTALLED_SRC))))
 
 installed := $(sort $(installed_built) $(installed_src))
 

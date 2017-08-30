@@ -10,4 +10,6 @@ helloin2.bash_MODE := 755
 
 INSTALLED := hello.bash helloin.bash helloin2.bash
 
+INSTALLED_SRC = $(wildcard $(srcdir)/dogs)
+
 include ./quickbuild.make

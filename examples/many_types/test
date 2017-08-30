@@ -5,14 +5,15 @@ set -ex
 
 
 ./hello
-#./hello.bash # do not exist in build tree if not source tree
+#./hello.bash # does not exist in build tree if it's not also the source tree
 ./helloin.bash
 ./helloin2.bash
-
+# ./dogs # does not exist in build tree if it's not also the source tree
 ./installed/bin/hello
 ./installed/bin/hello.bash
 ./installed/bin/helloin.bash
 ./installed/bin/helloin2.bash
+./installed/bin/dogs
 
 [ -f ./installed/bin/test.js ] || exit 1
 [ -f ./installed/bin/index.html ] || exit 1
