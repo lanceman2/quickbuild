@@ -1,0 +1,3 @@
+
+CPPFLAGS := -g
+CFLAGS := -Wall
