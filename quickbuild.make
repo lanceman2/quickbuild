@@ -155,6 +155,19 @@ endif
 # if subdirs is not an empty string we recurse and then call the
 # non-recursing make (subdirs=) as we pop back out of the recurse.
 #
+# Q: What is our default quickbuild dependency model?
+#
+# A: We assume that files built in parent directories are dependent on
+#   files built in child directories.  We see that the things built last
+#   tend to be the most important things, and they tend to depend on the
+#   building blocks that came before, in child directories.  So files
+#   built in the upper directories tend to be the things of most interest,
+#   and they are most visible in the upper directories.
+#
+#   That is why we built the lower most child directories before upper
+#   directories.  We could have gone the other way, but than users would
+#   have to dig into directories more to find the interesting files.
+#
 
 build: rec_build
 install: rec_install
@@ -215,7 +228,7 @@ ifneq ($(strip $(srcdir)),.)
 # from a directory different than the source directory.
 VPATH := .:$(srcdir)
 # and where to find header source files:
-CPPFLAGS := $(strip -I. -I$(srcdir) $(CPPFLAGS))
+cppflags := -I. -I$(srcdir)
 endif
 
 
@@ -412,7 +425,7 @@ define Mkdepend
  $$(name).d $$(name).$(4): $(2).$(3)
  dependfiles := $(dependfiles) $$(name).d
  $(1)_objects := $$(strip $$($(1)_objects) $$(name).$(4))
- common_cflags := $(CPPFLAGS) $$($$(name).$(4)_CPPFLAGS) $$($(1)_CPPFLAGS)
+ common_cflags := $(cppflags) $(CPPFLAGS) $$($$(name).$(4)_CPPFLAGS) $$($(1)_CPPFLAGS)
  ifeq ($(3),c)
    $$(name).$(4)_cflags := $$(strip $(CFLAGS) $$(common_cflags) $$($(1)_CFLAGS) $$($$(name).$(4)_CFLAGS))
  else
