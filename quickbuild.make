@@ -290,7 +290,7 @@ CXXFLAGS ?= -g -Wall
 
 .SUFFIXES: # Delete the default suffixes
 # Define our suffix list
-.SUFFIXES: .js .css .html .js .css .jsp .cs .dl .bl .c .cpp .h .hpp .d .o .lo .so
+.SUFFIXES: .js .css .html .js .css .jsp .cs .dl .bl .c .cpp .h .hpp .d .o .lo .so .x3d
 
 ##############################################################
 # List of suffixes
@@ -525,6 +525,11 @@ common_built := $(sort\
  $(patsubst $(srcdir)/%.html.bl,%.html,$(wildcard $(srcdir)/*.html.bl))\
  $(patsubst $(srcdir)/%.html.bl.in,%.html,$(wildcard $(srcdir)/*.html.bl.in))\
 \
+ $(patsubst $(srcdir)/%.x3d.bl,%.x3d,$(wildcard $(srcdir)/*.x3d.bl))\
+ $(patsubst $(srcdir)/%.x3d.in,%.x3d,$(wildcard $(srcdir)/*.x3d.in))\
+ $(patsubst $(srcdir)/%.x3d.bl.in,%.x3d,$(wildcard $(srcdir)/*.x3d.bl.in))\
+ $(patsubst $(srcdir)/%.x3d.dl,%.x3d,$(wildcard $(srcdir)/*.x3d.dl))\
+\
  $(bins)\
  $(libs)\
  $(BUILD)\
@@ -534,7 +539,14 @@ common_built := $(sort\
 
 installed := $(sort $(filter-out $(BUILD_NO_INSTALL),\
  $(common_built)\
- $(wildcard *.js *.css *.html *.gif *.jpg *.png)\
+ $(patsubst $(srcdir)/%,%,$(wildcard\
+ $(srcdir)/*.js\
+ $(srcdir)/*.css\
+ $(srcdir)/*.html\
+ $(srcdir)/*.gif\
+ $(srcdir)/*.jpg\
+ $(srcdir)/*.png\
+ $(srcdir)/*.x3d))\
  $(INSTALLED)\
 ))
 
