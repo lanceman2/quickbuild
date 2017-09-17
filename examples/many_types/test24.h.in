@@ -1,4 +1,4 @@
 
 static inline void test24(void) {
-    printf("%s NODEJS_SHABANG=%s\n", __func__, "@NODEJS_SHABANG@");
+    printf("%s WORLD=%s\n", __func__, "@WORLD@");
 }

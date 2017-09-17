@@ -1,4 +1,4 @@
 #!/bin/bash
 
-echo "hello  NODEJS_SHABANG=@NODEJS_SHABANG@"
+echo "hello WORLD=@WORLD@"
 

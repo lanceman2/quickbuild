@@ -239,6 +239,13 @@ endif
 
 -include $(top_srcdir)/package.make
 
+
+#CSS_COMPRESS ?= yui-compressor --line-break 70 --type css
+CSS_COMPRESS ?= cat
+
+#JS_COMPRESS ?= yui-compressor --line-break 70 --type js
+JS_COMPRESS ?= cat
+
 ###################################################################
 #  Common variables that are set with the package
 ###################################################################
@@ -261,22 +268,6 @@ PREFIX ?= $(HOME)/installed/$(TAR_NAME)
 else
 PREFIX ?= $(HOME)/installed
 endif
-
-# How to convert .cs to .css
-#   yui-compressor --line-break 60 --type css
-# or for debug
-#   cat
-CSS_COMPRESS ?= cat
-
-# How to convert .jsp to .js
-#   yui-compressor --line-break 60 --type js
-# or for debug
-#   cat
-JS_COMPRESS ?= cat
-
-# How to run node js with the system #! at the top of the
-# file that is being run
-NODEJS_SHABANG ?= /usr/bin/env node
 
 
 ###################################################################
@@ -330,9 +321,6 @@ CXXFLAGS ?= -g -Wall
 # list of make variables that get written to config.make
 config_vars := $(sort\
  PREFIX\
- JS_COMPRESS\
- CSS_COMPRESS\
- NODEJS_SHABANG\
  CFLAGS\
  CXXFLAGS\
  CPPFLAGS\
@@ -344,9 +332,15 @@ config_vars := $(sort\
 # @SERVER_PORT@ with the value of $(SERVER_PORT) in "foo.in" to make
 # file "foo".
 seds := $(sort\
- NODEJS_SHABANG\
  $(IN_VARS)\
 )
+
+
+ifeq ($(seds),)
+DUMMY_Z := dummy_z
+seds := DUMMY_Z
+endif
+
 
 sed_commands :=
 define Seds

@@ -4,7 +4,7 @@ out=helloin2.bash
 
 cat << EOF > $out
 #!/bin/bash
-echo "hello  NODEJS_SHABANG=@NODEJS_SHABANG@"
+echo "hello WORLD=@WORLD@"
 
 EOF
 chmod 755 $out
