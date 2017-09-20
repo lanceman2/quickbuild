@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -ex
+
+./hello
+./installed/bin/hello
+./test1
+if [ -e ./installed/bin/test1 ] ; then
+    exit 1
+fi

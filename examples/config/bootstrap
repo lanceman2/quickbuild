@@ -1,0 +1,9 @@
+#!/bin/bash
+set -ex
+
+cat << EOF > config_pre.make
+#this is a generated file
+TESTS := yes
+EOF
+
+cp ../../quickbuild.make .

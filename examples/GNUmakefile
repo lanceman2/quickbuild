@@ -67,8 +67,8 @@ build: $(quickbuild_copies) $(builddirs)
 $(quickbuild_downloads):
 	set -e
 	for d in $(bootstrap_dirs) ; do\
-	    if [ -e "$$d/quickbuild.make" ] ; then continue; fi;\
-	    cd $$d && ./bootstrap && cd - ;\
+	    if [ ! -e "$$d/quickbuild.make" ] ; then\
+	    cd $$d && ./bootstrap && cd - ; fi;\
 	    done
 
 debug:
