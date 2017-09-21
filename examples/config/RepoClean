@@ -1,6 +1,0 @@
-#!/bin/bash
-
-set -ex
-
-rm -f hello quickbuild.make config.make config_pre.make
-rm -rf qb_build
