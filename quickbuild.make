@@ -241,7 +241,9 @@ endif
 endif
 
 
+ifeq ($(findstring package.make,$(MAKEFILE_LIST)),)
 -include $(top_srcdir)/package.make
+endif
 
 
 #CSS_COMPRESS ?= yui-compressor --line-break 70 --type css
@@ -661,6 +663,7 @@ $(built): | $(downloaded)
 
 # run 'make debug' to just spew this stuff:
 debug:
+	@echo "BUILD=$(BUILD)"
 	@echo "configmakefile=$(configmakefile)"
 	@echo "objects=$(objects)"
 	@echo "cleanerfiles=$(cleanerfiles)"
@@ -705,6 +708,7 @@ $(bl_in_scripts):
 # below.
 # *.in -> *
 $(in_files):
+	rm -f $@
 	if head -1 $< | grep -E '^#!' ; then\
 	  sed -n '1,1p' $< | sed $(sed_commands) > $@ &&\
           if [ -n "$($@_GEN_COMMENT)" ] ; then\
@@ -712,11 +716,13 @@ $(in_files):
           else\
 	    echo -e "# This is a generated file\n" >> $@ ; fi ;\
 	  sed '1,1d' $< | sed $(sed_commands) >> $@ ;\
-	elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$|\.h$$|.c$$|\.hpp$$|.cpp$$ ]] ; then\
+	elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$|\.h$$|\.c$$|\.hpp$$|\.cpp$$ ]] ; then\
 	  echo -e "/* This is a generated file */\n" > $@ &&\
 	  sed $< $(sed_commands) >> $@ ;\
 	else\
-	  sed $< $(sed_commands) > $@ ; fi
+	  if [ -n "$($@_GEN_COMMENT)" ] ; then\
+            echo -e "$($@_GEN_COMMENT)"  > $@ ; fi;\
+	  sed $< $(sed_commands) >> $@ ; fi
 	if [[ $@ == *.bl ]] ; then chmod 755 $@ ; fi
 	if [ -n "$($@_MODE)" ] ; then chmod $($@_MODE) $@ ; fi
 
