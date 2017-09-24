@@ -232,10 +232,14 @@ cppflags := -I. -I$(srcdir)
 endif
 
 
-ifneq ($(strip $(patsubst clean%,foobar, $(MAKECMDGOALS))),foobar)
+# Do not include config.make more than once.
+ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
+ifneq ($(strip $(patsubst clean%,foobarz, $(MAKECMDGOALS))),foobarz)
 #$(warning including config.make)
 -include $(configmakefile)
 endif
+endif
+
 
 -include $(top_srcdir)/package.make
 
