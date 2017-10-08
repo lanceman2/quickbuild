@@ -349,11 +349,10 @@ endif
 
 
 sed_commands :=
-define Seds
+define AddInReplace
   sed_commands := $$(sed_commands) -e 's!@$(1)@!$$(strip $$($(1)))!g'
 endef
-$(foreach cmd,$(seds),$(eval $(call Seds,$(cmd))))
-undefine Sedsinstalled
+$(foreach cmd,$(seds),$(eval $(call AddInReplace,$(cmd))))
 undefine seds
 # now we have the sed_commands for making * from *.in files
 
@@ -456,6 +455,7 @@ define Mkcpprules
   # programs depend on object files
   $(1): $$($(1)_objects)
   ldadd :=
+  $(1)_ADDLIBS := $$($(1)_ADDLIBS) $(ADDLIBS)
   ifneq ($$(strip $$($(1)_ADDLIBS)),)
     dirr := $$(patsubst %/,%,$(CURDIR)/$$(dir $$($(1)_ADDLIBS)))
     name := $$(patsubst lib%.so,%,$$(notdir $$($(1)_ADDLIBS)))
@@ -678,6 +678,8 @@ debug:
 	@echo "srcdir=$(srcdir)"
 	@echo "top_srcdir=$(top_srcdir)"
 	@echo "top_builddir=$(top_builddir)"
+	@echo "IN_VARS=$(IN_VARS)"
+	@echo "sed_commands= $(sed_commands)"
 
 
 help:
