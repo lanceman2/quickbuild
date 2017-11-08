@@ -146,7 +146,6 @@ ifdef SUBDIRS # user interface to reorder the sub-directories
 subdirs := $(SUBDIRS)
 endif
 
-#$(error subdirs=$(subdirs))
 
 #########################################################################
 #                  recursion
@@ -175,10 +174,12 @@ download: rec_download
 clean: rec_clean
 cleaner: rec_cleaner
 distclean: rec_distclean
+debug: rec_debug
+
 
 rec_build rec_clean rec_cleaner\
  rec_distclean rec_install rec_download\
- rec_config:
+ rec_config rec_debug:
 	set -e
 	for d in $(subdirs) ; do\
           $(MAKE) -C $$d $(patsubst rec_%,%,$(@)); done
