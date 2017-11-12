@@ -754,9 +754,9 @@ ifneq ($(INSTALL_DIR),)
 ifneq ($(installed),)
 	cp -r $(installed) $(INSTALL_DIR)
 endif
+endif
 ifneq ($(strip $(POST_INSTALL_COMMAND)),)
 	$(POST_INSTALL_COMMAND)
-endif
 endif
 
 
