@@ -535,10 +535,11 @@ common_built := $(sort\
  $(libs)\
  $(BUILD)\
  $(BUILD_NO_INSTALL)\
+ $(BUILD_NO_CLEAN)\
 )
 
 
-installed := $(sort $(filter-out $(BUILD_NO_INSTALL),\
+installed := $(sort $(filter-out $(BUILD_NO_INSTALL) $(BUILD_NO_CLEAN),\
  $(common_built)\
  $(patsubst $(srcdir)/%,%,$(wildcard\
  $(srcdir)/*.js\
@@ -594,6 +595,12 @@ cleanerfiles := $(sort $(CLEANERFILES) $(wildcard *.pyc))
 
 ifeq ($(strip $(top_builddir)),.)
     cleanerfiles := $(cleanerfiles) $(configmakefile)
+endif
+
+
+ifneq ($(sort $(BUILD_NO_CLEAN)),)
+cleanfiles := $(sort $(filter-out $(BUILD_NO_CLEAN), $(cleanfiles)))
+cleanerfiles := $(sort $(filter-out $(BUILD_NO_CLEAN), $(cleanerfiles)))
 endif
 
 
