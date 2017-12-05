@@ -813,6 +813,9 @@ ifneq ($(cleanerfiles),)
 endif
 
 
+export PREFIX
+
+
 endif # ifneq ($(subdirs),)  else
 
 endif # ifdef BUILD_PREFIX   else
