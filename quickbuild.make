@@ -792,11 +792,11 @@ download: $(downloaded)
 
 
 clean:
-ifneq ($(cleanfiles),)
-	rm -f $(cleanfiles)
-endif
 ifneq ($(cleandirs),)
 	rm -rf $(cleandirs)
+endif
+ifneq ($(cleanfiles),)
+	rm -f $(cleanfiles)
 endif
 
 
