@@ -85,8 +85,8 @@ test: build
             echo -e "\n    ----- Running test in $$d -----\n";\
             if ! ./test ; then\
               let fcount=$${fcount}+1 ;\
-              err="$${err}\n   test in $$d FAILED\n";\
-              echo -e "\n   test in $$d FAILED\n";\
+              err="$${err}\n   test in $$d/ FAILED\n";\
+              echo -e "\n   test in $$d/ FAILED\n";\
             fi ;\
           fi ;\
           cd .. ;\

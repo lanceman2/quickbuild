@@ -83,10 +83,13 @@ $(error You have already built this package in $(top_srcdir)\
  so now you cannot build it here too)
 endif
 
-endif
+endif # ifdef top_srcdir
 
 
+
+#########################################################################
 ifdef BUILD_PREFIX
+#########################################################################
 
 # someone ran:
 #
@@ -135,21 +138,43 @@ else # ifdef BUILD_PREFIX
 
 .DEFAULT_GOAL := build
 
-
 ifndef subdirs
 subdirs := $(sort $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)))
 endif
 
+# subdirs is now defined, but may be empty
+
 ifneq ($(subdirs),)
 
-ifdef SUBDIRS # user interface to reorder the sub-directories
-subdirs := $(SUBDIRS)
+ifeq ($(strip $(MAKECMDGOALS)),)
+    rec := rec_build
+else
+  define CheckForRecursive
+    rec += rec_$$(findstring $(1), $(MAKECMDGOALS))
+  endef
+  rec_targets := build install downnload clean cleaner distclean debug
+  $(foreach targ,$(rec_targets),$(eval $(call CheckForRecursive,$(targ))))
+  undefine CheckForRecursive
+  undefine rec_targets
 endif
 
+rec_target := $(filter-out rec_, $(firstword $(rec)))
+undefine rec
 
+endif # ifneq ($(subdirs),)
+
+
+
+#################### DO WE HAVE A RECURSIVE TARGET ? ####################
+ifneq ($(rec_target),)
 #########################################################################
 #                  recursion
 #########################################################################
+
+ifneq ($(SUBDIRS),) # user interface to reorder or just change the sub-directories
+subdirs := $(SUBDIRS)
+endif
+
 #
 # if subdirs is not an empty string we recurse and then call the
 # non-recursing make (subdirs=) as we pop back out of the recurse.
@@ -168,25 +193,16 @@ endif
 #   have to dig into directories more to find the interesting files.
 #
 
-build: rec_build
-install: rec_install
-download: rec_download
-clean: rec_clean
-cleaner: rec_cleaner
-distclean: rec_distclean
-debug: rec_debug
-
-
-rec_build rec_clean rec_cleaner\
- rec_distclean rec_install rec_download\
- rec_config rec_debug:
+$(rec_target):
 	set -e
 	for d in $(subdirs) ; do\
           $(MAKE) -C $$d $(patsubst rec_%,%,$(@)); done
 	$(MAKE) subdirs= $(patsubst rec_%,%,$(@))
 
 
-else # ifneq ($(subdirs),)
+
+else #ifneq ($(rec_target),)
+
 
 #########################################################################
 #                  NO recursion
@@ -206,13 +222,15 @@ endif
 
 
 ifndef top_srcdir
+
 # We are building in the source tree
 top_srcdir = $(top_builddir)
 srcdir = .
-else
+
+else # ifndef top_srcdir
+
 # We are NOT building in the source tree
 # We should have both top_srcdir and srcdir be full path
-
 
 ifeq ($(top_builddir),.)
 # We are in the top build directory
@@ -221,6 +239,7 @@ else
 srcdir = $(patsubst $(abspath $(top_builddir))/%, $(abspath $(top_srcdir))/%,\
  $(abspath $(dir $(firstword $(MAKEFILE_LIST)))))
 endif
+
 endif # ifndef top_srcdir
 
 
@@ -816,6 +835,6 @@ endif
 export PREFIX
 
 
-endif # ifneq ($(subdirs),)  else
+endif # ifneq ($(rec_target),) else
 
 endif # ifdef BUILD_PREFIX   else
