@@ -147,10 +147,10 @@ endif
 ifneq ($(subdirs),)
 
 ifeq ($(strip $(MAKECMDGOALS)),)
-    rec := rec_build
+    rec := build
 else
   define CheckForRecursive
-    rec += rec_$$(findstring $(1), $(MAKECMDGOALS))
+    rec += $$(patsubst FFOooZZ%,%,$$(findstring FFOooZZ$(1), FFOooZZ$(MAKECMDGOALS)))
   endef
   rec_targets := build install downnload clean cleaner distclean debug
   $(foreach targ,$(rec_targets),$(eval $(call CheckForRecursive,$(targ))))
@@ -158,10 +158,12 @@ else
   undefine rec_targets
 endif
 
-rec_target := $(filter-out rec_, $(firstword $(rec)))
+rec_target := $(strip $(firstword $(rec)))
 undefine rec
 
 endif # ifneq ($(subdirs),)
+
+#$(warning rec_target=$(rec_target))
 
 
 #################### DO WE HAVE A RECURSIVE TARGET ? ####################
@@ -195,9 +197,9 @@ endif
 
 
 # the target depends on the recursive target
-$(patsubst rec_%,%,$(rec_target)): $(rec_target)
+$(rec_target): rec_$(rec_target)
 
-$(rec_target):
+rec_$(rec_target):
 	set -e
 	for d in $(subdirs) ; do\
           $(MAKE) -C $$d $(patsubst rec_%,%,$(@)); done
