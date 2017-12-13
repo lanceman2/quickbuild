@@ -164,7 +164,6 @@ undefine rec
 endif # ifneq ($(subdirs),)
 
 
-
 #################### DO WE HAVE A RECURSIVE TARGET ? ####################
 ifneq ($(rec_target),)
 #########################################################################
@@ -174,6 +173,7 @@ ifneq ($(rec_target),)
 ifneq ($(SUBDIRS),) # user interface to reorder or just change the sub-directories
 subdirs := $(SUBDIRS)
 endif
+
 
 #
 # if subdirs is not an empty string we recurse and then call the
@@ -192,6 +192,10 @@ endif
 #   directories.  We could have gone the other way, but than users would
 #   have to dig into directories more to find the interesting files.
 #
+
+
+# the target depends on the recursive target
+$(patsubst rec_%,%,$(rec_target)): $(rec_target)
 
 $(rec_target):
 	set -e
