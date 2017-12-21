@@ -5,6 +5,8 @@
 
 SHELL = /bin/bash
 
+.ONESHELL:
+
 subdirs :=\
  $(sort\
  $(filter-out BUILD_%,\
@@ -60,8 +62,10 @@ quickbuild_copies: $(quickbuild_copies)
 build: $(quickbuild_copies) $(builddirs)
 	set -e
 	for d in $(builddirs) $(subdirs) ; do\
-	    PREFIX=$(PWD)/$$d/installed $(MAKE) -C $$d $@;\
-	    $(MAKE) -C $$d install $@;\
+	    cd $$d || exit 1 ;\
+	    if ! ( ( PREFIX=$(PWD)/$$d/installed $(MAKE) $@ ) && ( $(MAKE) install ) ) ; then\
+	      exit 1; fi ;\
+	    cd - ;\
 	    done
 
 $(quickbuild_downloads):

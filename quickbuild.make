@@ -138,6 +138,14 @@ else # ifdef BUILD_PREFIX
 
 .DEFAULT_GOAL := build
 
+rec_targets := build install download clean cleaner distclean debug
+
+.PHONEY: $(rec_targets)
+
+# We add actions for these later, but we need to have
+# make advertise these for bash completion now.
+$(rec_targets):
+
 ifndef subdirs
 subdirs := $(sort $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)))
 endif
@@ -146,24 +154,30 @@ endif
 
 ifneq ($(subdirs),)
 
+rec :=
+
+
 ifeq ($(strip $(MAKECMDGOALS)),)
     rec := build
 else
   define CheckForRecursive
-    rec += $$(patsubst FFOooZZ%,%,$$(findstring FFOooZZ$(1), FFOooZZ$(MAKECMDGOALS)))
+    rec += $$(patsubst oZZ%ZXx,%,$$(findstring oZZ$(1)ZXx, $$(addsuffix ZXx,$$(addprefix oZZ,$(MAKECMDGOALS)))))
   endef
-  rec_targets := build install downnload clean cleaner distclean debug
   $(foreach targ,$(rec_targets),$(eval $(call CheckForRecursive,$(targ))))
   undefine CheckForRecursive
-  undefine rec_targets
 endif
 
 rec_target := $(strip $(firstword $(rec)))
+
+#$(warning rec=$(rec) rec_target=$(rec_target)  subdirs=$(subdirs))
+
 undefine rec
 
 endif # ifneq ($(subdirs),)
 
-#$(warning rec_target=$(rec_target))
+
+
+#$(warning rec_target=$(rec_target) subdirs=$(subdirs))
 
 
 #################### DO WE HAVE A RECURSIVE TARGET ? ####################
@@ -260,10 +274,20 @@ endif
 
 # Do not include config.make more than once.
 ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
-ifneq ($(strip $(patsubst clean%,foobarz, $(MAKECMDGOALS))),foobarz)
-#$(warning including config.make)
+
+# Do not include config.make if we are running 'make clean', 'make
+# cleaner' or 'make 'distclean'
+targ := $(strip $(MAKECMDGOALS))
+ifneq ($(targ),clean)
 -include $(configmakefile)
 endif
+ifneq ($(targ),cleaner)
+-include $(configmakefile)
+endif
+ifneq ($(targ),distclean)
+-include $(configmakefile)
+endif
+
 endif
 
 
@@ -616,6 +640,7 @@ installed := $(sort $(installed_built) $(installed_src))
 
 cleanfiles := $(sort $(built) $(CLEANFILES))
 
+# *.pyc is a compiled python script
 cleanerfiles := $(sort $(CLEANERFILES) $(wildcard *.pyc))
 
 ifeq ($(strip $(top_builddir)),.)
@@ -719,7 +744,7 @@ help:
 	@echo -e "  $(MAKE) [TARGET]\n"
 	@echo -e "  Common TRAGETs are:"
 	@echo -e '$(foreach \
-	    var,build install download clean distclean,\n   $(var))' 
+	    var,$(rec_targets),\n   $(var))' 
 
 
 # some recipes not based on suffix
@@ -826,7 +851,7 @@ endif
 
 
 
-distclean cleaner: clean
+cleaner distclean: clean
 ifneq ($(CLEANERDIRS),)
 	rm -rf $(CLEANERDIRS)
 endif
