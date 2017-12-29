@@ -276,23 +276,39 @@ endif
 ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
 
 # Do not include config.make if we are running 'make clean', 'make
-# cleaner' or 'make 'distclean'
+# cleaner',  'make 'distclean', 'make config' or 'make make.config'
+config_inc := yes
 targ := $(strip $(MAKECMDGOALS))
-ifneq ($(targ),clean)
--include $(configmakefile)
+
+ifeq ($(targ),clean)
+  config_inc := no
 endif
-ifneq ($(targ),cleaner)
--include $(configmakefile)
+ifeq ($(targ),cleaner)
+  config_inc := no
 endif
-ifneq ($(targ),distclean)
--include $(configmakefile)
+ifeq ($(targ),distclean)
+  config_inc := no
+endif
+ifeq ($(targ),config.make)
+  config_inc := no
+endif
+ifeq ($(targ),config)
+  config_inc := no
 endif
 
+#$(warning config_inc =$(config_inc))
+ifeq ($(config_inc),yes)
+  #$(warning including $(configmakefile))
+  -include $(configmakefile)
 endif
+
+endif # ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
+
 
 
 ifeq ($(findstring package.make,$(MAKEFILE_LIST)),)
--include $(top_srcdir)/package.make
+  #$(warning MAKEFILE_LIST=$(MAKEFILE_LIST) CXXFLAGS=$(CXXFLAGS))
+  -include $(top_srcdir)/package.make
 endif
 
 
@@ -476,9 +492,9 @@ define Mkdepend
  $(1)_objects := $$(strip $$($(1)_objects) $$(name).$(4))
  common_cflags := $(cppflags) $(CPPFLAGS) $$($$(name).$(4)_CPPFLAGS) $$($(1)_CPPFLAGS)
  ifeq ($(3),c)
-   $$(name).$(4)_cflags := $$(strip $(CFLAGS) $$(common_cflags) $$($(1)_CFLAGS) $$($$(name).$(4)_CFLAGS))
+   $$(name).$(4)_cflags := $$(strip $(CFLAGS) $$(common_cflags) $$($(1)_CFLAGS) $$($$(name).$(4)_CFLAGS) $$(PACKAGE_CFLAGS))
  else
-   $$(name).$(4)_cflags := $$(strip $(CXXFLAGS) $$(common_cflags) $$($(1)_CXXFLAGS) $$($$(name).$(4)_CXXFLAGS))
+   $$(name).$(4)_cflags := $$(strip $(CXXFLAGS) $$(common_cflags) $$($(1)_CXXFLAGS) $$($$(name).$(4)_CXXFLAGS) $$(PACKAGE_CXXFLAGS))
  endif
  $$(name).d_cflags := $$($$(name).$(4)_cflags)
 endef
@@ -717,6 +733,8 @@ endif # ifneq ($(strip $(objects)),)
 build: $(downloaded) $(built) $(configmakefile)
 # download before building
 $(built): | $(downloaded)
+# make.config before download
+$(downloaded): | $(configmakefile)
 
 
 # run 'make debug' to just spew this stuff:
@@ -822,10 +840,7 @@ $(dependfiles): $(configmakefile)
 endif
 
 ifeq ($(top_builddir),.)
-config:
-	@echo -e "\nForcing a remaking of config.make\n"
-	rm -f config.make
-	$(MAKE) config.make
+config: config.make
 config.make:
 	echo -e "# This is a generated file\n" > $@
 	echo -e "$(foreach var,$(config_vars),\n$(var) ?= $(strip $($(var))\n))" |\
@@ -833,9 +848,12 @@ config.make:
 else
 # Use make in the top build directory and not do recursion
 # so subdirs is set to nothing.
+ifeq ($(config_inc),yes)
 $(configmakefile):
+	@echo "making $(configmakefile)"
 	$(MAKE) -C $(top_builddir) subdirs= config.make
 endif
+endif # ifeq ($(top_builddir),.)
 
 
 download: $(downloaded)
