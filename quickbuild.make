@@ -843,7 +843,7 @@ ifeq ($(top_builddir),.)
 config: config.make
 config.make:
 	echo -e "# This is a generated file\n" > $@
-	echo -e "$(foreach var,$(config_vars),\n$(var) ?= $(strip $($(var))\n))" |\
+	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
 else
 # Use make in the top build directory and not do recursion
