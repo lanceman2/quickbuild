@@ -94,7 +94,7 @@ ifdef BUILD_PREFIX
 
 # someone ran:
 #
-#    make BUILD_PREFIX=bla_bla_bla
+#    make BUILD_PREFIX=/bla/bla/bla/path
 #
 # So now we make a new build directory tree:
 
