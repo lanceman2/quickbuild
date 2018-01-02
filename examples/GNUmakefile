@@ -63,7 +63,8 @@ build: $(quickbuild_copies) $(builddirs)
 	set -e
 	for d in $(builddirs) $(subdirs) ; do\
 	    cd $$d || exit 1 ;\
-	    if ! ( ( PREFIX=$(PWD)/$$d/installed $(MAKE) $@ ) && ( $(MAKE) install ) ) ; then\
+	    if ! ( ( echo "PREFIX = $(PWD)/$$d/installed" >> config.make &&\
+	      $(MAKE) $@ ) && ( $(MAKE) install ) ) ; then\
 	      exit 1; fi ;\
 	    cd - ;\
 	    done

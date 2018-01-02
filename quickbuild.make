@@ -80,8 +80,8 @@ endif
 # Make sure that the source tree that we are using has not been built yet.
 # If make ever ran in the top_srcdir then config.make will exist.
 ifneq ($(strip $(wildcard $(top_srcdir)/config.make)),)
-$(error You have already built this package in $(top_srcdir)\
- so now you cannot build it here too)
+$(error You have already configured this package in $(top_srcdir)\
+ so now you cannot configure and build it here too)
 endif
 
 endif # ifdef top_srcdir
@@ -274,7 +274,7 @@ endif
 
 #######################################################################
 # We must concatenate the different versions of these variables from
-# local directory GNUmakefile, package.make, and config.make versions:
+# local directory GNUmakefile, config.make, and package.make versions:
 concat_vars := CPPFLAGS LDFLAGS CFLAGS ADDLIBS CXXFLAGS
 define Var_concat
   ifdef $(1)
@@ -284,6 +284,7 @@ endef
 define Undefine
   undefine $(1)
 endef
+
 
 # From local directory GNUmakefile
 $(foreach var,$(concat_vars),$(eval $(call Var_concat,$(var))))
@@ -316,9 +317,12 @@ endif
 
 #$(warning config_inc =$(config_inc))
 ifeq ($(config_inc),yes)
-  #$(warning including $(configmakefile))
   -include $(configmakefile)
-  # From config.make
+endif
+
+undefine config_inc
+
+ifneq ($(findstring config.make,$(MAKEFILE_LIST)),)
   $(foreach var,$(concat_vars),$(eval $(call Var_concat,$(var))))
   $(foreach var,$(concat_vars),$(eval $(call Undefine,$(var))))
 endif
@@ -328,7 +332,6 @@ endif # ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
 
 
 ifeq ($(findstring package.make,$(MAKEFILE_LIST)),)
-  #$(warning MAKEFILE_LIST=$(MAKEFILE_LIST) CXXFLAGS=$(CXXFLAGS))
   -include $(top_srcdir)/package.make
   # From package.make
   $(foreach var,$(concat_vars),$(eval $(call Var_concat,$(var))))
@@ -408,16 +411,6 @@ endif
 
 
 
-# list of make variables that get written to config.make
-config_vars := $(sort\
- PREFIX\
- CFLAGS\
- CXXFLAGS\
- CPPFLAGS\
- TOP_BUILDDIR\
- $(CONFIG_VARS)\
-)
-
 # Strings we replace all *.in files.  For example: we replace
 # @SERVER_PORT@ with the value of $(SERVER_PORT) in "foo.in" to make
 # file "foo".
@@ -455,7 +448,7 @@ in_files := $(sort\
  $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in))\
  $(patsubst $(srcdir)/%.in.dl,%,$(wildcard $(srcdir)/*.in.dl))\
 )
-$(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in $(configmakefile))))
+$(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in)))
 
 # *.bl.in
 bl_in_scripts := $(sort\
@@ -730,7 +723,6 @@ $(bins) $(libs):
 # clean or config in it.
 nodepend := $(strip\
  $(findstring clean, $(MAKECMDGOALS))\
- $(findstring config, $(MAKECMDGOALS))\
 )
 
 ifeq ($(nodepend),)
@@ -749,17 +741,14 @@ endif # ifneq ($(strip $(objects)),)
 
 
 # default target
-build: $(downloaded) $(built) $(configmakefile)
+build: $(downloaded) $(built)
 # download before building
 $(built): | $(downloaded)
-# make.config before download
-$(downloaded): | $(configmakefile)
 
 
 # run 'make debug' to just spew this stuff:
 debug:
 	@echo "BUILD=$(BUILD)"
-	@echo "configmakefile=$(configmakefile)"
 	@echo "objects=$(objects)"
 	@echo "cleanerfiles=$(cleanerfiles)"
 	@echo "cleanfiles=$(cleanfiles)"
@@ -852,27 +841,6 @@ endif
 ifneq ($(strip $(POST_INSTALL_COMMAND)),)
 	$(POST_INSTALL_COMMAND)
 endif
-
-
-ifneq ($(strip $(dependfiles)),)
-$(dependfiles): $(configmakefile)
-endif
-
-ifeq ($(top_builddir),.)
-config: config.make
-config.make:
-	echo -e "# This is a generated file\n" > $@
-	echo -e "$(foreach var,$(config_vars),\n$(var) = $(strip $($(var))\n))" |\
-	    sed -e 's/^ $$//' >> $@
-else
-# Use make in the top build directory and not do recursion
-# so subdirs is set to nothing.
-ifeq ($(config_inc),yes)
-$(configmakefile):
-	@echo "making $(configmakefile)"
-	$(MAKE) -C $(top_builddir) subdirs= config.make
-endif
-endif # ifeq ($(top_builddir),.)
 
 
 download: $(downloaded)
