@@ -9,8 +9,9 @@
 # quickbuild is a software build system based on GNU make.
 # A software build system for web apps with served public static files and
 # installed executables.
+#
 # Has build rules based on file suffixes.  It's just a short (<1000 lines)
-# make file that you include in your make files.
+# butt ugly make file that you include in your make files.
 #
 #
 ##########################################################################
@@ -271,6 +272,23 @@ VPATH := .:$(srcdir)
 cppflags := -I. -I$(srcdir)
 endif
 
+#######################################################################
+# We must concatenate the different versions of these variables from
+# local directory GNUmakefile, package.make, and config.make versions:
+concat_vars := CPPFLAGS LDFLAGS CFLAGS ADDLIBS CXXFLAGS
+define Var_concat
+  ifdef $(1)
+    concat_$(1) := $$(strip $$(concat_$(1)) $$($(1)))
+  endif
+endef
+define Undefine
+  undefine $(1)
+endef
+
+# From local directory GNUmakefile
+$(foreach var,$(concat_vars),$(eval $(call Var_concat,$(var))))
+$(foreach var,$(concat_vars),$(eval $(call Undefine,$(var))))
+
 
 # Do not include config.make more than once.
 ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
@@ -300,6 +318,9 @@ endif
 ifeq ($(config_inc),yes)
   #$(warning including $(configmakefile))
   -include $(configmakefile)
+  # From config.make
+  $(foreach var,$(concat_vars),$(eval $(call Var_concat,$(var))))
+  $(foreach var,$(concat_vars),$(eval $(call Undefine,$(var))))
 endif
 
 endif # ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
@@ -309,6 +330,9 @@ endif # ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
 ifeq ($(findstring package.make,$(MAKEFILE_LIST)),)
   #$(warning MAKEFILE_LIST=$(MAKEFILE_LIST) CXXFLAGS=$(CXXFLAGS))
   -include $(top_srcdir)/package.make
+  # From package.make
+  $(foreach var,$(concat_vars),$(eval $(call Var_concat,$(var))))
+  $(foreach var,$(concat_vars),$(eval $(call Undefine,$(var))))
 endif
 
 
@@ -343,12 +367,6 @@ endif
 
 
 ###################################################################
-
-# Any time the CC compiler is run
-CFLAGS ?= -g -Wall
-
-# Any time the CXX compiler is run
-CXXFLAGS ?= -g -Wall
 
 
 .SUFFIXES: # Delete the default suffixes
@@ -490,11 +508,11 @@ define Mkdepend
  $$(name).d $$(name).$(4): $(2).$(3)
  dependfiles := $(dependfiles) $$(name).d
  $(1)_objects := $$(strip $$($(1)_objects) $$(name).$(4))
- common_cflags := $(cppflags) $(CPPFLAGS) $$($$(name).$(4)_CPPFLAGS) $$($(1)_CPPFLAGS)
+ common_cflags := $(cppflags) $$(concat_CPPFLAGS) $$($$(name).$(4)_CPPFLAGS) $$($(1)_CPPFLAGS)
  ifeq ($(3),c)
-   $$(name).$(4)_cflags := $$(strip $(CFLAGS) $$(common_cflags) $$($(1)_CFLAGS) $$($$(name).$(4)_CFLAGS) $$(PACKAGE_CFLAGS))
+   $$(name).$(4)_cflags := $$(strip $$(concat_CFLAGS) $$(common_cflags) $$($(1)_CFLAGS) $$($$(name).$(4)_CFLAGS))
  else
-   $$(name).$(4)_cflags := $$(strip $(CXXFLAGS) $$(common_cflags) $$($(1)_CXXFLAGS) $$($$(name).$(4)_CXXFLAGS) $$(PACKAGE_CXXFLAGS))
+   $$(name).$(4)_cflags := $$(strip $$(concat_CXXFLAGS) $$(common_cflags) $$($(1)_CXXFLAGS) $$($$(name).$(4)_CXXFLAGS))
  endif
  $$(name).d_cflags := $$($$(name).$(4)_cflags)
 endef
@@ -510,10 +528,10 @@ define Mkcpprules
   cpp_srcfiles :=  $$(patsubst %.cpp,%,$$(filter %.cpp,$$($(1)_SOURCES)))
   ifneq ($$(strip $$(cpp_srcfiles)),)
     $(1)_compile := $(CXX)
-    $(1)_cflags := $$(strip $(3) $(CXXFLAGS) $$($(1)_CXXFLAGS))
+    $(1)_cflags := $$(strip $(3) $$(concat_CXXFLAGS) $$($(1)_CXXFLAGS))
   else
     $(1)_compile := $(CC)
-    $(1)_cflags := $$(strip $(3) $(CFLAGS) $$($(1)_CFLAGS))
+    $(1)_cflags := $$(strip $(3) $$(concat_CFLAGS) $$($(1)_CFLAGS))
   endif
   c_srcfiles :=  $$(patsubst %.c,%,$$(filter %.c,$$($(1)_SOURCES)))
   $$(foreach src,$$(cpp_srcfiles),$$(eval $$(call Mkdepend,$(1),$$(src),cpp,$(2))))
@@ -521,7 +539,7 @@ define Mkcpprules
   # programs depend on object files
   $(1): $$($(1)_objects)
   ldadd :=
-  $(1)_ADDLIBS := $$($(1)_ADDLIBS) $(ADDLIBS)
+  $(1)_ADDLIBS := $$($(1)_ADDLIBS) $$(concat_ADDLIBS)
   ifneq ($$(strip $$($(1)_ADDLIBS)),)
     dirr := $$(patsubst %/,%,$(CURDIR)/$$(dir $$($(1)_ADDLIBS)))
     name := $$(patsubst lib%.so,%,$$(notdir $$($(1)_ADDLIBS)))
@@ -529,7 +547,7 @@ define Mkcpprules
     undefine dirr
     undefine name
   endif
-  $(1)_ldflags := $$(strip $$(ldadd) $(LDFLAGS) $$($(1)_LDFLAGS))
+  $(1)_ldflags := $$(strip $$(ldadd) $$(concat_LDFLAGS) $$($(1)_LDFLAGS))
   objects := $$(objects) $$($(1)_objects)
 
   ifneq ($$(strip $$($(1)_INSTALL_RPATH)),)
@@ -541,6 +559,7 @@ define Mkcpprules
  $(INSTALL_DIR)/$(1)
   endif
 endef
+
 
 # GNU make for loop sets up make dependencies.
 $(foreach prog,$(bins),$(eval $(call Mkcpprules,$(prog),o,)))
@@ -843,7 +862,7 @@ ifeq ($(top_builddir),.)
 config: config.make
 config.make:
 	echo -e "# This is a generated file\n" > $@
-	echo -e "$(foreach var,$(config_vars),\n$(var) := $(strip $($(var))\n))" |\
+	echo -e "$(foreach var,$(config_vars),\n$(var) = $(strip $($(var))\n))" |\
 	    sed -e 's/^ $$//' >> $@
 else
 # Use make in the top build directory and not do recursion
