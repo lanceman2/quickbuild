@@ -661,7 +661,8 @@ installed_src := $(sort $(filter-out $(built), $(installed)))
 
 installed_built := $(sort $(filter-out $(installed_src), $(installed)))
 
-installed_src := $(sort $(patsubst %,$(srcdir)/%,$(patsubst $(srcdir)/%,%,$(installed_src) $(INSTALLED_SRC))))
+installed_src := $(sort $(patsubst %,$(srcdir)/%,$(patsubst\
+ $(srcdir)/%,%,$(installed_src) $(INSTALLED_SRC))))
 
 installed := $(sort $(installed_built) $(installed_src))
 
