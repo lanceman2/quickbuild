@@ -7,7 +7,7 @@ by potato, https://github.com/lanceman2/potato.
 ## Ports
 
 This is being developed on GNU/Linux systems: xubuntu 16.04 LTS
-and Debain 8.
+and Debain 8 and 9.
 
 ## About
 
