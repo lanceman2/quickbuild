@@ -779,16 +779,19 @@ help:
 # download script to targets
 # *.dl -> *
 $(dl_scripts):
-	$(srcdir)/$@.dl || (rm -rf $@ ; exit 1)
+	#$(srcdir)/$@.dl || (rm -rf $@ ; exit 1)
+	$(srcdir)/$@.dl || exit 1
 
 # *.bl -> *
 $(bl_scripts):
-	$(srcdir)/$@.bl || (rm -rf $@ ; exit 1)
+	#$(srcdir)/$@.bl || (rm -rf $@ ; exit 1)
+	$(srcdir)/$@.bl || exit 1
 
 # *.bl -> * that have *.bl.in files in the source
 # so the *.bl file will be in the build tree.
 $(bl_in_scripts):
-	./$@.bl || (rm -rf $@ ; exit 1)
+	#./$@.bl || (rm -rf $@ ; exit 1)
+	./$@.bl || exit 1
 
 # It's very important to say: "This is a generated file" in the upper
 # comments of generated files, hence this messy 'bash/sed' code just
