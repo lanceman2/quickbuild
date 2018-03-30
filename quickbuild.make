@@ -437,16 +437,31 @@ define Dependify
   $(1): $(1).$(2)
 endef
 
+define Set755Mode
+  $(1)_MODE := 0755
+endef
+
 # download (dl) scripts FILE.dl that download FILE
 # dl_scripts is the things downloaded
-dl_scripts := $(patsubst $(srcdir)/%.dl,%,$(wildcard $(srcdir)/*.dl))
+dl_scripts := $(sort\
+ $(patsubst $(srcdir)/%.dl,%,$(wildcard $(srcdir)/*.dl))\
+ $(patsubst $(srcdir)/%.dl.in,%,$(wildcard $(srcdir)/*.dl.in))\
+)
 $(foreach targ,$(dl_scripts),$(eval $(call Dependify,$(targ),dl)))
+
+# if we have a *.dl.in script it must be set with mode 755
+# after it is built.  So *.dl_MODE = 0755
+dl_in_scripts :=\
+ $(patsubst $(srcdir)/%.dl.in,%.dl,$(wildcard $(srcdir)/*.dl.in))
+$(foreach targ,$(dl_in_scripts),$(eval $(call Set755Mode,$(targ))))
+undefine dl_in_scripts
+undefine Set755Mode
+
 
 # In files, FILE.in, that build files named FILE
 # in_files is the things built
 in_files := $(sort\
  $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in))\
- $(patsubst $(srcdir)/%.in.dl,%,$(wildcard $(srcdir)/*.in.dl))\
 )
 $(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in)))
 
