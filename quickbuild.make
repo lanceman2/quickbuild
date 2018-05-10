@@ -819,7 +819,8 @@ $(in_files):
           if [ -n "$($@_GEN_COMMENT)" ] ; then\
             echo -e "$($@_GEN_COMMENT)"  >> $@ ;\
           else\
-	    echo -e "# This is a generated file\n" >> $@ ; fi ;\
+	    echo -e "# This is a generated file\n" >> $@ ;\
+	  fi ;\
 	  sed '1,1d' $< | sed $(sed_commands) >> $@ ;\
 	elif [[ "$@" =~ \.jsp$$|\.js$$|\.cs$$|\.css$$|\.h$$|\.c$$|\.hpp$$|\.cpp$$ ]] ; then\
 	  echo -e "/* This is a generated file */\n" > $@ &&\
