@@ -150,9 +150,21 @@ $(rec_targets):
 ifndef subdirs
 subdirs := $(sort $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)))
 endif
-ifneq ($(SUBDIRS),) # user interface to reorder or just change the sub-directories
+
+# Setting
+#     SUBDIRS :=
+# Does not work so in order for a GNUmakefile to stop suddirs from being
+# set because that does not define SUBDIRS so the user may use
+#     SUBDIR := .
+# to make make not go into subdirs.
+
+ifdef SUBDIRS # user interface to reorder or just change the sub-directories
 subdirs := $(strip $(SUBDIRS))
 endif
+ifeq ($(subdirs),.)
+subdirs :=
+endif
+
 
 # subdirs is now defined, but may be empty
 
