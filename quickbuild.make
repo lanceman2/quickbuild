@@ -150,6 +150,9 @@ $(rec_targets):
 ifndef subdirs
 subdirs := $(sort $(patsubst %/GNUmakefile,%,$(wildcard */GNUmakefile)))
 endif
+ifneq ($(SUBDIRS),) # user interface to reorder or just change the sub-directories
+subdirs := $(strip $(SUBDIRS))
+endif
 
 # subdirs is now defined, but may be empty
 
@@ -186,10 +189,6 @@ ifneq ($(rec_target),)
 #########################################################################
 #                  recursion
 #########################################################################
-
-ifneq ($(SUBDIRS),) # user interface to reorder or just change the sub-directories
-subdirs := $(SUBDIRS)
-endif
 
 
 #
