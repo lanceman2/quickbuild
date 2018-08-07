@@ -623,7 +623,9 @@ common_built := $(sort\
  $(patsubst $(srcdir)/%.cs.bl,%.css,$(wildcard $(srcdir)/*.cs.bl))\
 \
  $(patsubst $(srcdir)/%.js.dl,%.js,$(wildcard $(srcdir)/*.js.dl))\
+ $(patsubst $(srcdir)/%.jsp.dl,%.js,$(wildcard $(srcdir)/*.jsp.dl))\
  $(patsubst $(srcdir)/%.css.dl,%.css,$(wildcard $(srcdir)/*.css.dl))\
+ $(patsubst $(srcdir)/%.cs.dl,%.css,$(wildcard $(srcdir)/*.cs.dl))\
 \
  $(patsubst $(srcdir)/%.html.in,%.html,$(wildcard $(srcdir)/*.html.in))\
  $(patsubst $(srcdir)/%.html.bl,%.html,$(wildcard $(srcdir)/*.html.bl))\
