@@ -112,5 +112,5 @@ example (subdirectory) can stand on it's own as an independent project.
 
 We intend to keep the compressed (comments and blanks lines removed) copy
 of quickbuild.make by under 1000 lines.  2019 May 20 compressed line
-count is 339 with 909 before compressing.
+count is 458 with 909 before compressing (tagged 0.1).
 

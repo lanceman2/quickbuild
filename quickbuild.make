@@ -57,8 +57,8 @@ SHELL = /bin/bash
 .ONESHELL:
 
 # Something to mark the version of this file.  This should be the same as
-# a git tag.   If this ends in 0 than this is not a tagged version.
-QUICKBUILD_VERSION := 0.1
+# a git tag.   If this ends in 00 than this is not a tagged version.
+QUICKBUILD_VERSION := 0.1.00
 
 #########################################################################
 #########################################################################
