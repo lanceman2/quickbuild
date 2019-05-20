@@ -1,13 +1,12 @@
 # quickbuild
 
 a software build system, using GNU make, for C/C++ and web apps
-that serve HTML, javascript, and CSS.  It's the build system used
-by potato, https://github.com/lanceman2/potato.
+that serve HTML, javascript, and CSS.
 
 ## Ports
 
-This is being developed on GNU/Linux systems: xubuntu 16.04 LTS
-and Debain 8 and 9.
+This is being developed on GNU/Linux systems: Ubuntu 16.04 LTS, Ubuntu
+18.04 LTS and Debain 8 and 9.
 
 ## About
 
@@ -19,6 +18,7 @@ systems.
 
 Some familiarly with GNU make and bash is required to use it.
 
+Some of the make variables it defines and uses are like those in GNU automake.
 
 ## Usage
 
@@ -41,10 +41,7 @@ or for a given commit
 wget https://raw.github.com/lanceman2/quickbuild/FULL_GIT_HASH/quickbuild.make
 ```
 where FULL_GIT_HASH is the full lower case hex encoded git hash for the
-commit, like 1e98252310917008b3a8fb675539e7df435d7b9b.
-
-In short, quickbuild uses files suffix rules to build files from source
-via GNU make.
+commit, like 1e98252310917008b3a8fb675539e7df435d7b9b, or a tag like 0.1
 
 
 ## Separate Build Trees
@@ -105,13 +102,15 @@ just copy quickbuild.make to the top of all the example package directory
 yourself.
 
 
-The top examples directory cannot be built in an alternate build directory
-like the example projects (sub-directories) can.
+The top examples directory cannot be built in an alternate build
+directory, like the example projects sub-directories can, because it's
+subdirectories are setup like independent software projects, so that each
+example (subdirectory) can stand on it's own as an independent project.
 
 
 ## Development Notes
 
 We intend to keep the compressed (comments and blanks lines removed) copy
-of quickbuild.make by under 1000 lines.  2017 Aug 20 compressed line
-count is 339 with 673 before compressing.
+of quickbuild.make by under 1000 lines.  2019 May 20 compressed line
+count is 339 with 909 before compressing.
 

@@ -56,6 +56,10 @@ SHELL = /bin/bash
 # of the shell.  This is very important.
 .ONESHELL:
 
+# Something to mark the version of this file.  This should be the same as
+# a git tag.   If this ends in 0 than this is not a tagged version.
+QUICKBUILD_VERSION := 0.1
+
 #########################################################################
 #########################################################################
 # We define this to setup for building in separate build tree with a
