@@ -476,7 +476,7 @@ undefine Set755Mode
 # In files, FILE.in, that build files named FILE
 # in_files is the things built
 in_files := $(sort\
- $(patsubst $(srcdir)/%.in,%,$(wildcard $(srcdir)/*.in))\
+ $(patsubst $(srcdir)/%.in,%,$(filter-out $(srcdir)/makefile.in, $(wildcard $(srcdir)/*.in)))\
 )
 $(foreach targ,$(in_files),$(eval $(call Dependify,$(targ),in)))
 
