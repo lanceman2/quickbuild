@@ -73,6 +73,15 @@ use built files that are in the source, and mix them will files built
 files in the build tree.  You may as well stir the code with a stick.
 
 
+## Development Notes
+
+Currently quickbuild is one make file that is included at the bottom of
+all your make files.   Being so seems to limit quickbuild so that package
+options that effect the make files at first pass can't be used.  For
+example the package can't add an option that optionally excludes sub
+directories via a make conditional directive.
+
+
 ## GNUmakefile
 
 GNUmakefile is used as the file name of the make files because we use GNU
