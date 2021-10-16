@@ -6,7 +6,7 @@ that serve HTML, javascript, and CSS.
 ## Ports
 
 This is being developed on GNU/Linux systems: Ubuntu 16.04 LTS, Ubuntu
-18.04 LTS and Debain 8 and 9.
+18.04 LTS, Ubuntu 20.04 LTS, and Debain 8 and 9.
 
 ## About
 
