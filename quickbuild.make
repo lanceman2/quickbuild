@@ -389,7 +389,7 @@ endif
 
 .SUFFIXES: # Delete the default suffixes
 # Define our suffix list
-.SUFFIXES: .js .css .html .js .css .jsp .cs .dl .bl .c .cpp .h .hpp .d .o .lo .so .x3d
+.SUFFIXES: .js .css .html .js .css .jsp .cs .dl .bl .c .cpp .h .hpp .d .o .lo .so .x3d .a
 
 ##############################################################
 # List of suffixes
@@ -407,6 +407,7 @@ endif
 #  .o object file to build compiled C/C++ program
 #  .lo shared object file to compile shared library
 #  .so dynamic shared object library
+#  .a shared object archive (not static objects)
 #  .cpp C++ source
 #  .c C source
 #  compiled programs and scripts have no particular suffix
@@ -419,7 +420,7 @@ endif
 #   to one installation directory given by user setting
 #   INSTALL_DIR.
 #
-#  .js .css .so .html compiled-programs are installed if
+#  .js .css .so .a .html compiled-programs are installed if
 #  INSTALL_DIR is defined
 #
 ##############################################################
@@ -503,10 +504,14 @@ downloaded := $(sort\
 
 
 # C or C++ compiled programs
-bins := $(filter-out %.so, $(patsubst %_SOURCES,%,$(filter %_SOURCES, $(.VARIABLES))))
+bins := $(filter-out %.a,$(filter-out %.so, $(patsubst %_SOURCES,%,$(filter %_SOURCES, $(.VARIABLES)))))
 
-# C or C++ shared libraries
+# C or C++ shared object libraries
 libs := $(filter-out %_SOURCES, $(patsubst %.so_SOURCES,%.so,$(filter %_SOURCES, $(.VARIABLES))))
+
+# C or C++ shared object archive libraries
+arcs := $(filter-out %_SOURCES, $(patsubst %.a_SOURCES,%.a,$(filter %_SOURCES, $(.VARIABLES))))
+
 
 dependfiles :=
 id :=
@@ -517,13 +522,13 @@ cpp_compile := $(CXX)
 
 # GNU make function to make dependency (*.d) files and object (*.o, *.lo) files.
 define Mkdepend
- # $(1) = program_name or libfoo.so
+ # $(1) = program_name, libfoo.so, or libfoo.a
  # $(2) = C/C++ source filename without .c or .cpp suffix
  # $(3) = c or cpp
  # $(4) = object type o or lo
  # name needs to be unique
  id := $(words $(counter))
- name := $$(patsubst %.so,%_so,qb_build/$$(notdir $(2)-$$(id)-$(1)))
+ name := $$(patsubst %.a,%_a,$$(patsubst %.so,%_so,qb_build/$$(notdir $(2)-$$(id)-$(1))))
  counter := $$(counter) x
  $$(name).d_target := $$(name).$(4)
  $$(name).$(4)_compile := $$($(3)_compile)
@@ -565,7 +570,7 @@ define Mkcpprules
   $(1)_ADDLIBS := $$($(1)_ADDLIBS) $$(concat_ADDLIBS)
   ifneq ($$(strip $$($(1)_ADDLIBS)),)
     dirr := $$(patsubst %/,%,$(CURDIR)/$$(dir $$($(1)_ADDLIBS)))
-    name := $$(patsubst lib%.so,%,$$(notdir $$($(1)_ADDLIBS)))
+    name := $$(patsubst lib%.a,%,$$(patsubst lib%.so,%,$$(notdir $$($(1)_ADDLIBS))))
     ldadd := -l$$(name) -L$$(dirr) -Wl,-rpath,$$(dirr)
     undefine dirr
     undefine name
@@ -587,6 +592,8 @@ endef
 # GNU make for loop sets up make dependencies.
 $(foreach prog,$(bins),$(eval $(call Mkcpprules,$(prog),o,)))
 $(foreach lib,$(libs),$(eval $(call Mkcpprules,$(lib),lo,-shared)))
+$(foreach lib,$(arcs),$(eval $(call Mkcpprules,$(lib),lo,-shared)))
+
 
 
 # We are done with these variables:
@@ -642,6 +649,7 @@ common_built := $(sort\
 \
  $(bins)\
  $(libs)\
+ $(arcs)\
  $(BUILD)\
  $(BUILD_NO_INSTALL)\
  $(BUILD_NO_CLEAN)\
@@ -747,9 +755,13 @@ qb_build/%.d:
 	$($@_compile) $($@_cflags) -MM $< -MF $@ -MT $($@_target)
 
 
-# How to build a C/C++ program.
+# How to build a C/C++ program or shared object library
 $(bins) $(libs):
 	$($@_compile) $($@_cflags) $($@_objects) -o $@ $($@_ldflags)
+
+$(arcs):
+	ar rsv -o $@ $($@_objects)
+
 
 
 # We do not build depend files *.d if we have a command line target with
