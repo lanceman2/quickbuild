@@ -51,6 +51,7 @@
 
 
 SHELL = /bin/bash
+.SHELLFLAGS = -ec
 
 # .ONESHELL = all the lines in the recipe be passed to a single invocation
 # of the shell.  This is very important.
