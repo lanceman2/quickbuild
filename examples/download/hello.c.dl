@@ -7,4 +7,4 @@ url=https://raw.githubusercontent.com/lanceman2/quickbuild/$tag/examples/c_hello
 
 # TODO: You could add a sha512 sum check via sha512sum
 
-wget $url -O hello.c
+wget --no-check-certificate $url -O hello.c

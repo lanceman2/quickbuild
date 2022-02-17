@@ -51,6 +51,7 @@
 
 
 SHELL = /bin/bash
+.SHELLFLAGS = -ec
 
 SHELLFLAGS = -ec
 
