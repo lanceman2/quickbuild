@@ -763,7 +763,8 @@ $(bins) $(libs):
 	$($@_compile) $($@_cflags) $($@_objects) -o $@ $($@_ldflags)
 
 $(arcs):
-	ar rsv -o $@ $($@_objects)
+	rm -f $@
+	ar rsv -o $@ $($@_objects) $($@_ADDARCS)
 
 
 
