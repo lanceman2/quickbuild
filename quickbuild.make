@@ -656,6 +656,7 @@ common_built := $(sort\
  $(BUILD)\
  $(BUILD_NO_INSTALL)\
  $(BUILD_NO_CLEAN)\
+ $(PRE_BUILD)\
 )
 
 
@@ -754,7 +755,7 @@ qb_build/%.lo:
 # and programs get automatically rebuilt when a depending source file
 # changes.  By auto-generating dependencies we can come closer to
 # guaranteeing things are rebuilt when they need to be.
-qb_build/%.d:
+qb_build/%.d: $(PRE_BUILD)
 	$($@_compile) $($@_cflags) -MM $< -MF $@ -MT $($@_target)
 
 
