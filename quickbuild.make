@@ -735,8 +735,8 @@ ifneq ($(strip $(objects)),)
 
 # We cannot use a directory as a dependency since it's modification date
 # changed as files in it change, so we use a touch file in the
-# directory.
-$(dependfiles) $(objects): qb_build/depend.touch
+# qb_build/ directory.
+$(dependfiles) $(objects): qb_build/depend.touch $(PRE_BUILD)
 qb_build/depend.touch:
 	mkdir qb_build
 	touch $@
@@ -755,7 +755,7 @@ qb_build/%.lo:
 # and programs get automatically rebuilt when a depending source file
 # changes.  By auto-generating dependencies we can come closer to
 # guaranteeing things are rebuilt when they need to be.
-qb_build/%.d: $(PRE_BUILD)
+qb_build/%.d:
 	$($@_compile) $($@_cflags) -MM $< -MF $@ -MT $($@_target)
 
 
