@@ -310,7 +310,12 @@ $(foreach var,$(concat_vars),$(eval $(call Undefine,$(var))))
 
 
 # Do not include config.make more than once.
-ifeq ($(findstring config.make,$(MAKEFILE_LIST)),)
+
+# This used to be $(findstring config.make,$(MAKEFILE_LIST)) where the
+# findstring function matched fontconfig.make which was a file in one of
+# my software packages.  The file named XzXQconfig.makeXzXQ is not too
+# likely to exist.
+ifeq ($(findstring XzXQconfig.makeXzXQ,$(patsubst %,XzXQ%XzXQ,$(MAKEFILE_LIST))),)
 
 # Do not include config.make if we are running 'make clean', 'make
 # cleaner',  'make 'distclean', 'make config' or 'make make.config'
